@@ -63,6 +63,12 @@ const createUser = async (req, res) => {
   const phone_number = req.body.phone_number ? req.body.phone_number : null;
   const role_id = req.body.role_id ? req.body.role_id : 0;
   const department_id = req.body.department_id ? req.body.department_id : 0;
+//   const customer_name = req.body.customer_name ? req.body.customer_name.trim() : "";
+  const company_name = req.body.company_name ? req.body.company_name.trim() : "";
+  const address = req.body.address ? req.body.address.trim() : "";
+  const domain = req.body.domain ? req.body.domain.trim() : "";
+  const service_id = req.body.service_id ? req.body.service_id : 0;
+  const isSite = req.body.isSite ? req.body.isSite : '';
   const customerAgent = req.body.customerAgent ? req.body.customerAgent :[];
   const password = "123456";
 
@@ -105,6 +111,18 @@ const createUser = async (req, res) => {
         const insertUserValues = [ user_name, email_id, phone_number, role_id, department_id ];
         const insertuserResult = await connection.query(insertUserQuery, insertUserValues);
         const user_id = insertuserResult[0].insertId;
+
+        //role-customer
+        const selectCustomerRoleQuery = `SELECT * FROM roles WHERE role_id = ?`
+        const selectResult = await connection.query(selectCustomerRoleQuery,[role_id]);
+        const customerRole = selectResult[0][0];
+        if(customerRole.role_name === 'Customer'){
+            const insertCustomerQuery = `INSERT INTO customers (customer_name, company_name, email_id, address, phone_number, domain, service_id, isSite) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+            const insertCustomerValues = [ user_name, company_name, email_id, address, phone_number, domain, service_id, isSite ];
+            const insertCustomerResult = await connection.query(insertCustomerQuery, insertCustomerValues);
+        }
+        
+        
         
         if (role_id == 3) {
         let customerAgentArray = customerAgent;
@@ -264,6 +282,8 @@ const login = async (req, res) => {
         });
 
     } catch (error) {
+        console.log(error);
+        
         return error500(error, res)
     } finally {
         await connection.release();
