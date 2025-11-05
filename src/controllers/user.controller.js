@@ -120,34 +120,29 @@ const createUser = async (req, res) => {
             const insertCustomerQuery = `INSERT INTO customers (customer_name, company_name, email_id, address, phone_number, domain, service_id, isSite) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
             const insertCustomerValues = [ user_name, company_name, email_id, address, phone_number, domain, service_id, isSite ];
             const insertCustomerResult = await connection.query(insertCustomerQuery, insertCustomerValues);
-        }
+            const customerid = insertCustomerResult[0].insertId;
+        
         
         
         
         if (role_id == 3) {
         let customerAgentArray = customerAgent;
-        for (let i = 0; i < customerAgentArray.length; i++) {
-            const elements = customerAgentArray[i];
-            const Technician_id = elements.user_id ? elements.user_id : '';
-          
-             // Check if Technician exists
-              const technicianQuery = "SELECT user_id FROM users WHERE role_id = 2 AND user_id = ?";
-              const technicianResult = await connection.query(technicianQuery,[Technician_id]);
-              if (technicianResult[0].length == 0) {
-                return error422("Technician Not Found.", res);
-              }
-
-            const insertAgentQuery = `INSERT INTO customer_agents (customer_id, user_id ) VALUES (?, ?)`;
-            const insertAgentValues = [ user_id, Technician_id ];
-            const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
+            for (let i = 0; i < customerAgentArray.length; i++) {
+                const elements = customerAgentArray[i];
+                const user_nm = elements.user_nm ? elements.user_nm.trim() : "";
+                const email_id = elements.email_id ? elements.email_id.trim() : "";
+                const mobile_number = elements.mobile_number ? elements.mobile_number : '';
+        
+                const insertAgentQuery = `INSERT INTO customer_agents (customer_id, user_nm, mobile_number, email_id) VALUES (?, ?, ?, ?)`;
+                const insertAgentValues = [ customerid, user_nm, mobile_number, email_id ];
+                const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
+            }
         }
     }
-        
         const hash = await bcrypt.hash(password, 10); // Hash the password using bcrypt
 
         //insert into Untitled
-        const insertUntitledQuery =
-            "INSERT INTO untitled (user_id, extenstions) VALUES (?,?)";
+        const insertUntitledQuery = "INSERT INTO untitled (user_id, extenstions) VALUES (?,?)";
         const insertUntitledValues = [user_id, hash];
         const untitledResult = await connection.query(insertUntitledQuery, insertUntitledValues)
 
@@ -156,7 +151,7 @@ const createUser = async (req, res) => {
 
         // try {
         const message = `
-      <!DOCTYPE html>
+        <!DOCTYPE html>
         <html lang="en">
         <head>
           <meta charset="UTF-8">
@@ -172,8 +167,8 @@ const createUser = async (req, res) => {
         </head>
         <body>
         <div>
-       <h2 style="text-transform: capitalize;">Hi ${user_name},</h2>
-       <h3>Welcome to Tecstaq!</h3>
+        <h2 style="text-transform: capitalize;">Hi ${user_name},</h2>
+        <h3>Welcome to Tecstaq!</h3>
 
         <p>Your account has been successfully created. Here are your login details:</p>
         <p>Email: ${email_id}</p>
@@ -199,13 +194,12 @@ const createUser = async (req, res) => {
         };
 
         try {
-      await transporter.sendMail(mailOptions);
-      return res.status(200).json({
+        await transporter.sendMail(mailOptions);
+        return res.status(200).json({
         status: 200,
         message: `User created successfully.`,
       });
     } catch (emailError) {
-      console.error("Email sending failed:", emailError);
       return res.status(200).json({
         status: 200,
         message: "User created successfully, but failed to send email.",
@@ -282,8 +276,6 @@ const login = async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error);
-        
         return error500(error, res)
     } finally {
         await connection.release();
@@ -434,7 +426,6 @@ const updateUser = async (req, res) => {
     } else if (!phone_number) {
         return error422("Phone number is required.", res);
     }
-
 
     // attempt to obtain a database connection
     let connection = await getConnection();
