@@ -1341,6 +1341,10 @@ const signUp = async (req, res) => {
         
         //commit the transation
         await connection.commit();
+        return res.status(200).json({
+            status:200,
+            message:"Signup successfully."
+        })
     } catch (error) {
         await connection.rollback();
         return error500(error, res);
