@@ -67,8 +67,9 @@ const createUser = async (req, res) => {
   const company_name = req.body.company_name ? req.body.company_name.trim() : "";
   const address = req.body.address ? req.body.address.trim() : "";
   const domain = req.body.domain ? req.body.domain.trim() : "";
-  const service_id = req.body.service_id ? req.body.service_id : 0;
+  const service_id = req.body.service_id ? req.body.service_id : [];
   const isSite = req.body.isSite ? req.body.isSite : '';
+  const serviceData = req.body.serviceData ? req.body.serviceData : [];
   const customerAgent = req.body.customerAgent ? req.body.customerAgent :[];
   const password = "123456";
 
@@ -117,14 +118,29 @@ const createUser = async (req, res) => {
         const selectResult = await connection.query(selectCustomerRoleQuery,[role_id]);
         const customerRole = selectResult[0][0];
         if(customerRole.role_name === 'Customer'){
-            const insertCustomerQuery = `INSERT INTO customers (customer_name, company_name, email_id, address, phone_number, domain, service_id, isSite) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-            const insertCustomerValues = [ user_name, company_name, email_id, address, phone_number, domain, service_id, isSite ];
+            const insertCustomerQuery = `INSERT INTO customers (customer_name, company_name, email_id, address, phone_number, domain, isSite) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+            const insertCustomerValues = [ user_name, company_name, email_id, address, phone_number, domain, isSite ];
             const insertCustomerResult = await connection.query(insertCustomerQuery, insertCustomerValues);
             const customerid = insertCustomerResult[0].insertId;
+
+        let serviceArray = serviceData
+        for (let i = 0; i < serviceArray.length; i++) {
+            const elements = serviceArray[i];
+            const service_id = elements.service_id ? elements.service_id : null;
+            
+            // Check if service_id exists
+            const serviceIdQuery = "SELECT * FROM services WHERE service_id = ? ";
+            const serviceIdResult = await connection.query(serviceIdQuery, [service_id]);
+            if (serviceIdResult[0].length == 0) {
+                return error422("Service Not Found.", res);
+            }
+
+            let insertServiceQuery = 'INSERT INTO customer_service (customer_id, service_id) VALUES (?, ?)';
+            let insertServiceValues = [ customerid, service_id ];
+            let insertServiceResult = await connection.query(insertServiceQuery, insertServiceValues);
+        }
         
-        
-        
-        
+       
         if (role_id == 3) {
         let customerAgentArray = customerAgent;
             for (let i = 0; i < customerAgentArray.length; i++) {
@@ -206,6 +222,8 @@ const createUser = async (req, res) => {
       });
     }
     } catch (error) {
+        console.log(error);
+        
         await connection.rollback();
         return error500(error, res);
     } finally {
