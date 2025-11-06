@@ -88,12 +88,12 @@ const createUser = async (req, res) => {
   }
 
   
-    //check User Name already is exists or not
-    const isExistUserNameQuery = `SELECT * FROM users WHERE LOWER(TRIM(user_name))= ?`;
-    const isExistUserNameResult = await pool.query(isExistUserNameQuery, [user_name.toLowerCase()]);
-    if (isExistUserNameResult[0].length > 0) {
-        return error422(" User Name is already exists.", res);
-    }
+    // //check User Name already is exists or not
+    // const isExistUserNameQuery = `SELECT * FROM users WHERE LOWER(TRIM(user_name))= ?`;
+    // const isExistUserNameResult = await pool.query(isExistUserNameQuery, [user_name.toLowerCase()]);
+    // if (isExistUserNameResult[0].length > 0) {
+    //     return error422(" User Name is already exists.", res);
+    // }
 
     // Check if email_id exists
     const checkUserQuery = "SELECT * FROM users WHERE LOWER(TRIM(email_id)) = ? AND status = 1";
@@ -222,8 +222,6 @@ const createUser = async (req, res) => {
       });
     }
     } catch (error) {
-        console.log(error);
-        
         await connection.rollback();
         return error500(error, res);
     } finally {
@@ -408,9 +406,8 @@ const getUser = async (req, res) => {
         const user = userResult[0][0];
     
         if (user.role_id == 3){
-        let agentQuery = `SELECT ca.*, u.user_name, u1.user_name AS aechnician_name FROM customer_agents ca
-            LEFT JOIN users u ON u.user_id = ca.user_id
-            LEFT JOIN users u1 ON u1.user_id = ca.customer_id
+        let agentQuery = `SELECT ca.*,c.customer_name FROM customer_agents ca
+            LEFT JOIN customers c ON c.customer_id = ca.customer_id
             WHERE ca.customer_id = ?`
         let agentResult = await connection.query(agentQuery, [userId]);
         user['agent'] = agentResult[0];
@@ -1308,6 +1305,80 @@ const getDB = async (req, res) => {
   }
 };
 
+//create sign up
+const signUp = async (req, res) => {
+  const user_name = req.body.user_name ? req.body.user_name.trim() : "";
+  const email_id = req.body.email_id ? req.body.email_id.trim() : "";
+  const phone_number = req.body.phone_number ? req.body.phone_number : null;
+  const domain = req.body.domain ? req.body.domain.trim() : "";
+  
+  if (!user_name) {
+    return error422("User name is required.", res);
+  } else if (!email_id) {
+    return error422("Email id is required.", res);
+  } else if (!phone_number) {
+    return error422("Phone number is required.", res);
+  } else if (!domain) {
+    return error422("Domain is required.", res);
+  } 
+
+    // Check if email_id exists
+    const checkUserQuery = "SELECT * FROM signup WHERE LOWER(TRIM(email_id)) = ? AND status = 1";
+    const checkUserResult = await pool.query(checkUserQuery, [email_id.toLowerCase()]);
+    if (checkUserResult[0].length > 0) {
+        return error422('Email id is already exists.', res);
+    }
+    
+    // Attempt to obtain a database connection
+    let connection = await getConnection();
+    try {
+        //Start the transaction
+        await connection.beginTransaction();
+        //insert into sign up
+        const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain ) VALUES (?, ?, ?, ?)`;
+        const insertSignUpValues = [ user_name, email_id, phone_number, domain ];
+        const insertSignUpResult = await connection.query(insertSignUpQuery, insertSignUpValues);
+        
+        //commit the transation
+        await connection.commit();
+    } catch (error) {
+        await connection.rollback();
+        return error500(error, res);
+    } finally {
+        await connection.release();
+    }
+};
+
+//check domain
+const checkDomain = async (req, res) => {
+    const domain = req.body.domain ? req.body.domain.trim() : ""; // Extract and trim domain from request body
+    if (!domain) {
+        return error422("Domain required.", res);
+    }
+
+    let connection = await getConnection();
+    try {
+        //Start the transaction
+        await connection.beginTransaction();
+
+        // Check if domain exists
+        const query = 'SELECT * FROM customers WHERE TRIM(LOWER(domain)) = ?';
+        const result = await connection.query(query, [domain.toLowerCase()]);
+        if (result[0].length === 0) {
+            return error422('Domain is not found.', res);
+        }
+        
+        return res.status(200).json({
+            status: 200,
+            message: "Email Id Exists",
+            email_id: true,
+        });
+    } catch (error) {
+        return error500(error, res);
+    } finally {
+        if (connection) connection.release();
+    }
+};
 module.exports = {
   createUser,
   login,
@@ -1326,5 +1397,7 @@ module.exports = {
   sendOtpIfEmailIdNotExists,
   deleteTechnician,
   getUserDownload,
-  getDB
+  getDB,
+  signUp,
+  checkDomain
 };
