@@ -1506,7 +1506,7 @@ const email_id = req.body.email_id ? req.body.email_id.trim() : "";
         </head>
         <body>
         <div>
-       <h2 style="text-transform: capitalize;">Hello ${user_name},</h2>
+       <h2 style="text-transform: capitalize;">Hello ,</h2>
         <p>It seems you requested a password reset for your Tecstaq-helddesk account. Use the OTP below to complete the process and regain access to your account.</p>
         <h3>Your OTP: <strong>${otp}</strong></h3>
         <p>For security, this OTP will expire in 5 minutes. Please don’t share this code with anyone. If you didn’t request a password reset, please ignore this email or reach out to our support team for assistance.</p>
