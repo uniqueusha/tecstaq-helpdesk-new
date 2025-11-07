@@ -1383,6 +1383,119 @@ const checkDomain = async (req, res) => {
         if (connection) connection.release();
     }
 };
+
+//send otp sign up
+const sendOtpSignUp = async (req, res) => {
+const email_id = req.body.email_id ? req.body.email_id.trim() : "";
+  const domain = req.body.domain ? req.body.domain.trim().toLowerCase() : "";
+
+  if (!email_id) {
+    return error422("Email is required.", res);
+  }
+
+   // Check if email_id exists
+    const query = 'SELECT * FROM signup WHERE TRIM(LOWER(email_id)) = ?';
+    const result = await pool.query(query, [email_id.toLowerCase()]);
+    if (result[0].length === 0) {
+        return error422('Email id is not found.', res);
+    }
+
+    let user_name = result[0][0].user_name;
+
+  // ✅ Extract domain part from email
+  const emailDomain = email_id.split("@")[1]?.toLowerCase();
+
+  if (!emailDomain) {
+    return error422("Invalid email format.", res);
+  }
+
+  // ✅ Clean up domain (remove '@' if included)
+  const cleanDomain = domain.startsWith("@")
+    ? domain.substring(1).toLowerCase()
+    : domain.toLowerCase();
+
+  // ✅ Compare the two domains
+  if (emailDomain !== cleanDomain) {
+    return error422(`Email domain mismatch. Expected domain: @${emailDomain}`, res);
+  }
+    let connection = await getConnection();
+    try {
+        //Start the transaction
+        await connection.beginTransaction();
+        const otp = Math.floor(100000 + Math.random() * 900000);
+        const deleteQuery = `DELETE FROM otp WHERE cts < NOW() - INTERVAL 5 MINUTE`;
+        const deleteResult = await connection.query(deleteQuery);
+
+        const otpQuery = "INSERT INTO otp (otp, email_id) VALUES (?, ?)";
+        const otpResult = await connection.query(otpQuery, [otp, email_id])
+
+        const message = `
+      <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <title>Welcome to Tecstaq-helddesk.com</title>
+          <style>
+              div{
+              font-family: Arial, sans-serif; 
+               margin: 0px;
+                padding: 0px;
+                color:black;
+              }
+          </style>
+        </head>
+        <body>
+        <div>
+       <h2 style="text-transform: capitalize;">Hello ${user_name},</h2>
+        <p>It seems you requested a password reset for your Tecstaq-helddesk account. Use the OTP below to complete the process and regain access to your account.</p>
+        <h3>Your OTP: <strong>${otp}</strong></h3>
+        <p>For security, this OTP will expire in 5 minutes. Please don’t share this code with anyone. If you didn’t request a password reset, please ignore this email or reach out to our support team for assistance.</p>
+        <h4>What’s Next?</h4>
+        <ol>
+          <li>Enter the OTP on the password reset page.</li>
+          <li>Set your new password, and you’re all set to log back in.</li>
+        <li>Thank you for using Tecstaq-helddesk Application!</li>
+        </ol>
+        <p>Best regards,<br>The Tecstaq-helddesk Team</p>
+         </div>
+        </body>
+        </html>`;
+
+        // Validate required fields.
+        if (!email_id || !message) {
+            return res
+                .status(400)
+                .json({ status: "error", message: "Missing required fields" });
+        }
+
+        // Prepare the email message options.
+        const mailOptions = {
+            from: "support@tecstaq.com", // Sender address from environment variables.
+            to: `${email_id}`, // Recipient's name and email address.
+            //    replyTo: "rohitlandage86@gmail.com", // Sets the email address for recipient responses.
+            //  bcc: "sushantsjamdade@gmail.com",
+            // bcc: "sushantsjamdade@gmail.com",
+            subject: "Reset Your Tecstaq-crm Password – OTP Inside", // Subject line.
+            html: message,
+        };
+
+        // Send email 
+        await transporter.sendMail(mailOptions);
+
+        return res.status(200).json({
+            status: 200,
+            message: `OTP sent successfully to ${email_id}.`,
+
+        })
+    } catch (error) {
+        console.log(error);
+        
+        return error500(error, res)
+    } finally {
+        if (connection) connection.release()
+    }
+}
+
 module.exports = {
   createUser,
   login,
@@ -1403,5 +1516,6 @@ module.exports = {
   getUserDownload,
   getDB,
   signUp,
-  checkDomain
+  checkDomain,
+  sendOtpSignUp
 };

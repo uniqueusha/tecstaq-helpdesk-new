@@ -11,6 +11,8 @@ router.post('/login', userController.login);
 router.post('/signup', userController.signUp);
 //domain check
 router.post('/domain-check', userController.checkDomain);
+//otp domain email same
+router.post('/match', userController.sendOtpSignUp);
 //all list
 router.get('/', userController.getUsers);
 //active list
