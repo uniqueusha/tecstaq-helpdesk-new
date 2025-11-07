@@ -1405,6 +1405,12 @@ const signUp = async (req, res) => {
             status:200,
             message:"Signup successfully."
         })
+    } catch (emailError) {
+      return res.status(200).json({
+        status: 200,
+        message: "Signup successfully, but failed to send email.",
+      });
+    }
     } catch (error) {
         await connection.rollback();
         return error500(error, res);
