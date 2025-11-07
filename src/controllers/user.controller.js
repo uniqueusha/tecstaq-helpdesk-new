@@ -1374,7 +1374,7 @@ const checkDomain = async (req, res) => {
         
         return res.status(200).json({
             status: 200,
-            message: "Email Id Exists",
+            message: "Domain Exists",
             email_id: true,
         });
     } catch (error) {
@@ -1393,14 +1393,14 @@ const email_id = req.body.email_id ? req.body.email_id.trim() : "";
     return error422("Email is required.", res);
   }
 
-   // Check if email_id exists
-    const query = 'SELECT * FROM signup WHERE TRIM(LOWER(email_id)) = ?';
-    const result = await pool.query(query, [email_id.toLowerCase()]);
-    if (result[0].length === 0) {
-        return error422('Email id is not found.', res);
-    }
+//    // Check if email_id exists
+//     const query = 'SELECT * FROM signup WHERE TRIM(LOWER(email_id)) = ?';
+//     const result = await pool.query(query, [email_id.toLowerCase()]);
+//     if (result[0].length === 0) {
+//         return error422('Email id is not found.', res);
+//     }
 
-    let user_name = result[0][0].user_name;
+//     let user_name = result[0][0].user_name;
 
   // ✅ Extract domain part from email
   const emailDomain = email_id.split("@")[1]?.toLowerCase();
@@ -1450,12 +1450,6 @@ const email_id = req.body.email_id ? req.body.email_id.trim() : "";
         <p>It seems you requested a password reset for your Tecstaq-helddesk account. Use the OTP below to complete the process and regain access to your account.</p>
         <h3>Your OTP: <strong>${otp}</strong></h3>
         <p>For security, this OTP will expire in 5 minutes. Please don’t share this code with anyone. If you didn’t request a password reset, please ignore this email or reach out to our support team for assistance.</p>
-        <h4>What’s Next?</h4>
-        <ol>
-          <li>Enter the OTP on the password reset page.</li>
-          <li>Set your new password, and you’re all set to log back in.</li>
-        <li>Thank you for using Tecstaq-helddesk Application!</li>
-        </ol>
         <p>Best regards,<br>The Tecstaq-helddesk Team</p>
          </div>
         </body>
