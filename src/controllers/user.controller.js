@@ -1311,7 +1311,7 @@ const signUp = async (req, res) => {
   const email_id = req.body.email_id ? req.body.email_id.trim() : "";
   const phone_number = req.body.phone_number ? req.body.phone_number : null;
   const domain = req.body.domain ? req.body.domain.trim() : "";
-  const department_id = 3;
+  const role_id = 3;
   const password = "123456";
   
   if (!user_name) {
@@ -1341,8 +1341,8 @@ const signUp = async (req, res) => {
         const insertSignUpValues = [ user_name, email_id, phone_number, domain ];
         const insertSignUpResult = await connection.query(insertSignUpQuery, insertSignUpValues);
         
-        const insertUserQuery = `INSERT INTO users (user_name, email_id, phone_number, department_id) VALUES (?, ?, ?, ?)`;
-        const insertUserValues = [ user_name, email_id, phone_number, department_id ];
+        const insertUserQuery = `INSERT INTO users (user_name, email_id, phone_number, role_id) VALUES (?, ?, ?, ?)`;
+        const insertUserValues = [ user_name, email_id, phone_number, role_id ];
         const insertuserResult = await connection.query(insertUserQuery, insertUserValues);
         const user_id = insertuserResult[0].insertId;
 
@@ -1356,50 +1356,50 @@ const signUp = async (req, res) => {
         //commit the transation
         await connection.commit();
 
-        // // try {
-        // const message = `
-        // <!DOCTYPE html>
-        // <html lang="en">
-        // <head>
-        //   <meta charset="UTF-8">
-        //   <title>Welcome to test</title>
-        //   <style>
-        //       div{
-        //       font-family: Arial, sans-serif; 
-        //        margin: 0px;
-        //         padding: 0px;
-        //         color:black;
-        //       }
-        //   </style>
-        // </head>
-        // <body>
-        // <div>
-        // <h2 style="text-transform: capitalize;">Hi ${user_name},</h2>
-        // <h3>Welcome to Tecstaq!</h3>
+         try {
+        const message = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <title>Welcome to test</title>
+          <style>
+              div{
+              font-family: Arial, sans-serif; 
+               margin: 0px;
+                padding: 0px;
+                color:black;
+              }
+          </style>
+        </head>
+        <body>
+        <div>
+        <h2 style="text-transform: capitalize;">Hi ${user_name},</h2>
+        <h3>Welcome to Tecstaq!</h3>
 
-        // <p>Your account has been successfully created. Here are your login details:</p>
-        // <p>Email: ${email_id}</p>
-        // <p>Temporary Password: ${password}</P>
-        // <p>You can log in using the following link:
-        //   <a href="https://desk.tecstaq.com/">https://desk.tecstaq.com/</a></p>
-        //   <p>For security reasons, please change your password after your first login.</p>
-        //   <p>If you didn’t request this account or believe this was created in error, please contact our support team at support@tecstaq.com.</p>
-        //   <p>Thank you,</p>
-        //   <p><strong>Tecstaq Support</strong></p>
+        <p>Your account has been successfully created. Here are your login details:</p>
+        <p>Email: ${email_id}</p>
+        <p>Temporary Password: ${password}</P>
+        <p>You can log in using the following link:
+          <a href="https://desk.tecstaq.com/">https://desk.tecstaq.com/</a></p>
+          <p>For security reasons, please change your password after your first login.</p>
+          <p>If you didn’t request this account or believe this was created in error, please contact our support team at support@tecstaq.com.</p>
+          <p>Thank you,</p>
+          <p><strong>Tecstaq Support</strong></p>
 
-        // </div>
-        // </body>
-        // </html>`;
+        </div>
+        </body>
+        </html>`;
 
-        // // Prepare the email message options.
-        // const mailOptions = {
-        //     from: "support@tecstaq.com", // Sender address from environment variables.
-        //     to: `${email_id}`, // Recipient's name and email address."sushantsjamdade@gmail.com",
-        //     // bcc: ["sushantsjamdade@gmail.com"],
-        //     subject: "Welcome to Tecstaq HelpDesk Support! Your Account Has Been Created", // Subject line.
-        //     html: message,
-        // };
-        // await transporter.sendMail(mailOptions);
+        // Prepare the email message options.
+        const mailOptions = {
+            from: "support@tecstaq.com", // Sender address from environment variables.
+            to: `${email_id}`, // Recipient's name and email address."sushantsjamdade@gmail.com",
+            // bcc: ["sushantsjamdade@gmail.com"],
+            subject: "Welcome to Tecstaq HelpDesk Support! Your Account Has Been Created", // Subject line.
+            html: message,
+        };
+        await transporter.sendMail(mailOptions);
 
         return res.status(200).json({
             status:200,
