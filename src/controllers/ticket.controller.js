@@ -55,6 +55,7 @@ const createTicketold = async (req, res)=>{
     const priority_id = req.body.priority_id ? req.body.priority_id :'';
     const department_id = req.body.department_id ? req.body.department_id :'';
     const subject = req.body.subject ? req.body.subject.trim() :'';
+    const customer_id = req.body.customer_id ? req.body.customer_id :'';
     const description = req.body.description ? req.body.description.trim() :'';
     const ticket_status = req.body.ticket_status ? req.body.ticket_status.trim() : null;
     const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
@@ -97,8 +98,8 @@ const createTicketold = async (req, res)=>{
         const closedAtResult = await pool.query(closedAtQuery);
         const closed_at = closedAtResult[0].cts;
 
-        const insertTicketQuery = "INSERT INTO tickets (ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, description, ticket_status, closed_at)VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        const insertTicketResult = await connection.query(insertTicketQuery,[ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, description, ticket_status, closed_at]);
+        const insertTicketQuery = "INSERT INTO tickets (ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, description, ticket_status, closed_at)VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        const insertTicketResult = await connection.query(insertTicketQuery,[ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, description, ticket_status, closed_at]);
         const ticket_id = insertTicketResult[0].insertId
 
       const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
@@ -228,8 +229,6 @@ const dbFilePath = `uploads/${fileName}`;
       });
     }
     } catch (error) {
-        console.log(error);
-        
         await connection.rollback();
         return error500(error, res);
     } finally{
@@ -242,6 +241,8 @@ const createTicket = async (req, res)=>{
     const priority_id = req.body.priority_id ? req.body.priority_id :'';
     const department_id = req.body.department_id ? req.body.department_id :'';
     const subject = req.body.subject ? req.body.subject.trim() :'';
+        const customer_id = req.body.customer_id ? req.body.customer_id :'';
+
     const description = req.body.description ? req.body.description.trim() :'';
     const ticket_status = req.body.ticket_status ? req.body.ticket_status.trim() : null;
     const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
@@ -266,11 +267,12 @@ const createTicket = async (req, res)=>{
         // start the transaction
         await connection.beginTransaction();
         const [rows] = await connection.query(`
-            SELECT ticket_no 
-            FROM tickets 
-            ORDER BY ticket_id DESC 
-            LIMIT 1
-        `);
+      SELECT ticket_no 
+      FROM tickets 
+      WHERE customer_id = ? 
+      ORDER BY ticket_id DESC 
+      LIMIT 1
+    `, [customer_id]);
 
         let ticket_no = 'TCK-1'; // default first ticket number
 
@@ -284,8 +286,8 @@ const createTicket = async (req, res)=>{
         const closedAtResult = await pool.query(closedAtQuery);
         const closed_at = closedAtResult[0].cts;
 
-        const insertTicketQuery = "INSERT INTO tickets (ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, description, ticket_status, closed_at)VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        const insertTicketResult = await connection.query(insertTicketQuery,[ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, description, ticket_status, closed_at]);
+        const insertTicketQuery = "INSERT INTO tickets (ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, description, ticket_status, closed_at)VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        const insertTicketResult = await connection.query(insertTicketQuery,[ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, description, ticket_status, closed_at]);
         const ticket_id = insertTicketResult[0].insertId
 
       const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
@@ -402,7 +404,6 @@ const dbFilePath = `uploads/${fileName}`;
         message: `Ticket created successfully.`,
         });
     } catch (emailError) {
-        console.error("Email sending failed:", emailError);
         return res.status(200).json({
         status: 200,
         message: "Ticket created successfully, but failed to send email.",
@@ -426,14 +427,11 @@ const updateTicket = async (req, res) => {
     const subject = req.body.subject ? req.body.subject.trim() :'';
     const description = req.body.description ? req.body.description.trim() :'';
     const ticket_status = req.body.ticket_status ? req.body.ticket_status.trim() : '';
-    console.log(ticket_status);
-    
     const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
     const ticket_conversation_id = req.body.ticket_conversation_id ? req.body.ticket_conversation_id : null;
     const base64PDF = req.body.file_path ? req.body.file_path.trim() :'';
     const assigned_to = req.body.assigned_to ? req.body.assigned_to : '';
         // const remark = req.body.remark ? req.body.remark.trim() :'';
-
     const assigned_at = req.body.assigned_at ? req.body.assigned_at : null;
     const remarks = req.body.remarks ? req.body.remarks.trim() :'';
     const message = req.body.message ? req.body.message.trim() :'';
@@ -611,8 +609,6 @@ for (let i = 0; i < userResult.length; i++) {
             message: "Ticket updated successfully.",
         });
     } catch (error) {
-        console.log(error);
-        
         return error500(error, res);
     } finally {
         if (connection) connection.release()
@@ -1262,8 +1258,6 @@ const getStatusList = async (req, res) => {
 
         return res.status(200).json(data);
     } catch (error) {
-        console.log(error);
-        
         return error500(error, res);
     } finally {
         await connection.release();

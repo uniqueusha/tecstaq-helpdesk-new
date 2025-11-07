@@ -67,8 +67,6 @@ const addPriority = async (req, res) => {
             message: "Priority added successfully",
         });
     } catch (error) {
-        console.log(error);
-        
         return error500(error, res);
     } finally {
         if (connection) connection.release()
@@ -381,8 +379,6 @@ const getPriorityDownload = async (req, res) => {
 
         await connection.commit();
     } catch (error) {
-      console.log(error);
-      
         return error500(error, res);
     } finally {
         if (connection) connection.release();

@@ -1192,9 +1192,6 @@ const getDBlocal = async (req, res) => {
     if (!fs.existsSync(sqlFilePath)) {
       throw new Error(`SQL file not found at path: ${sqlFilePath}`);
     }
-
-    console.log('📄 Importing from:', sqlFilePath);
-
     // 4️⃣ Import SQL file
     const importer = new Importer({
       host: 'localhost',
@@ -1261,7 +1258,6 @@ const getDB = async (req, res) => {
       throw new Error(`SQL file not found at path: ${sqlFilePath}`);
     }
 
-    console.log('?? Importing from:', sqlFilePath);
 
     // 4?? Import SQL file
     const importer = new Importer({
@@ -1403,7 +1399,7 @@ const signUp = async (req, res) => {
 
         return res.status(200).json({
             status:200,
-            message:"Signup successfully."
+            message:"Signup successfully AND Check Mail."
         })
     } catch (emailError) {
       return res.status(200).json({
@@ -1548,8 +1544,6 @@ const email_id = req.body.email_id ? req.body.email_id.trim() : "";
 
         })
     } catch (error) {
-        console.log(error);
-        
         return error500(error, res)
     } finally {
         if (connection) connection.release()
