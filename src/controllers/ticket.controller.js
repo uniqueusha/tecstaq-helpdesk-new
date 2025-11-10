@@ -222,7 +222,6 @@ const dbFilePath = `uploads/${fileName}`;
         message: `Ticket created successfully.`,
       });
     } catch (emailError) {
-      console.error("Email sending failed:", emailError);
       return res.status(200).json({
         status: 200,
         message: "Ticket created successfully, but failed to send email.",
@@ -617,7 +616,7 @@ for (let i = 0; i < userResult.length; i++) {
 
 //all tickets list
 const getAllTickets = async (req, res) => {
-    const { page, perPage, key, user_id, department_id, ticket_category_id, assigned_to, fromDate, toDate, ticket_status, priority_id } = req.query;
+    const { page, perPage, key, user_id, department_id, ticket_category_id, assigned_to, fromDate, toDate, ticket_status, priority_id, customer_id } = req.query;
 
     // attempt to obtain a database connection
     let connection = await getConnection();
@@ -670,6 +669,11 @@ const getAllTickets = async (req, res) => {
         if (fromDate && toDate) {
             getTicketsQuery += ` AND DATE(t.created_at) BETWEEN '${fromDate}' AND '${toDate}'`;
             countQuery += ` AND DATE(t.created_at) BETWEEN '${fromDate}' AND '${toDate}'`;
+        }
+
+        if (customer_id) {
+            getTicketsQuery += ` AND t.customer_id = ${customer_id} `;
+            countQuery += ` AND t.customer_id = ${customer_id}  `;
         }
 
         if (user_id) {
