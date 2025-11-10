@@ -1655,8 +1655,12 @@ const getCustomer = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        const customerQuery = `SELECT c.* 
+        const customerQuery = `SELECT c.*,u.role_id, u.department_id, r.role_name, d.department_name
         FROM customers c 
+        LEFT JOIN users u ON u.user_id = c.user_id
+        LEFT JOIN roles r ON r.role_id = u.role_id
+        LEFT JOIN departments d ON d.department_id = u.department_id
+
         WHERE 1 AND c.customer_id = ? `;
         const customerResult = await connection.query(customerQuery, [customerId]);
         if (customerResult[0].length == 0) {
