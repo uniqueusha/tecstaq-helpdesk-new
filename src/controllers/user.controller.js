@@ -1624,6 +1624,74 @@ const getCustomers = async (req, res) => {
     }
 }
 
+//Customer by id
+const getCustomer = async (req, res) => {
+    const customerId = parseInt(req.params.id);
+
+    // attempt to obtain a database connection
+    let connection = await getConnection();
+
+    try {
+
+        //start a transaction
+        await connection.beginTransaction();
+
+        const customerQuery = `SELECT c.* 
+        FROM customers c 
+        WHERE 1 AND c.customer_id = ? `;
+        const customerResult = await connection.query(customerQuery, [customerId]);
+        if (customerResult[0].length == 0) {
+            return error422("Customer Not Found.", res);
+        }
+        const customer = customerResult[0][0];
+
+        return res.status(200).json({
+            status: 200,
+            message: "Customer Retrived Successfully",
+            data: customer
+        });
+    } catch (error) {
+        return error500(error, res);
+    } finally {
+        if (connection) connection.release()
+    }
+}
+
+// customer to Services
+const getServicesWma = async (req, res) => {
+     const { user_id} = req.query;
+
+    // attempt to obtain a database connection
+    let connection = await getConnection();
+
+    try {
+
+        //start a transaction
+        await connection.beginTransaction();
+
+        let agentQuery = `SELECT u.*
+        FROM users u
+        WHERE 1 AND u.status = 1 AND u.role_id = 2`;
+       
+        agentQuery += ` ORDER BY u.created_at`;
+        const agentResult = await connection.query(agentQuery);
+        const agent = agentResult[0];
+
+        // Commit the transaction
+        await connection.commit();
+
+        return res.status(200).json({
+            status: 200,
+            message: "Customer Agents retrieved successfully.",
+            data: agent,
+        });
+    } catch (error) {
+        return error500(error, res);
+    } finally {
+        if (connection) connection.release()
+    }
+}
+
 module.exports = {
   createUser,
   login,
@@ -1646,5 +1714,6 @@ module.exports = {
   signUp,
   checkDomain,
   sendOtpSignUp,
-  getCustomers
+  getCustomers,
+  getCustomer
 };

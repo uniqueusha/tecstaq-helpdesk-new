@@ -236,7 +236,7 @@ const getTicketCategories = async (req, res) => {
 
 //all ticket categories list
 const getAllTicketCategories = async (req, res) => {
-    const { page, perPage, key} = req.query;
+    const { page, perPage, key, department_id} = req.query;
 
     // attempt to obtain a database connection
     let connection = await getConnection();

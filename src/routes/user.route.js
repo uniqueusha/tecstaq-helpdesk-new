@@ -30,6 +30,8 @@ router.get('/technician-wma', userController.getTechnicianWma);
 router.get('/db-download', userController.getDB);
 //by id 
 router.get('/:id', userController.getUser);
+//customer by id
+router.get('/customer/:id', userController.getCustomer);
 //change password
 router.put('/change-password',userController.onChangePassword);
 //update user
