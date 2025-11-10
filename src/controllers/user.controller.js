@@ -433,6 +433,12 @@ const updateUser = async (req, res) => {
     const phone_number = req.body.phone_number ? req.body.phone_number : null;
     const role_id = req.body.role_id ? req.body.role_id : 0;
     const department_id = req.body.department_id ? req.body.department_id : 0;
+    const company_name = req.body.company_name ? req.body.company_name.trim() : "";
+    const address = req.body.address ? req.body.address.trim() : "";
+    const domain = req.body.domain ? req.body.domain.trim() : "";
+    const service_id = req.body.service_id ? req.body.service_id : [];
+    const isSite = req.body.isSite ? req.body.isSite : '';
+    const serviceData = req.body.serviceData ? req.body.serviceData : [];
     const customerAgent = req.body.customerAgent ? req.body.customerAgent :[];
     if (!user_name) {
         return error422("User name is required.", res);
