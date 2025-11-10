@@ -1669,7 +1669,7 @@ const email_id = req.body.email_id ? req.body.email_id.trim() : "";
 
   // ✅ Compare the two domains
   if (emailDomain !== cleanDomain) {
-    return error422(`Email domain mismatch. Expected domain: @${emailDomain}`, res);
+    return error422(`Email domain mismatch. Expected domain: ${emailDomain}`, res);
   }
     let connection = await getConnection();
     try {
@@ -1846,8 +1846,10 @@ const getCustomer = async (req, res) => {
         let serviceResult = await connection.query(serviceQuery, [customerId]);
         customer['service'] = serviceResult[0];
 
-        let agentQuery = `SELECT ca.*,c.customer_name FROM customer_agents ca
+        let agentQuery = `SELECT ca.*,c.customer_name, d.department_name,u.user_name FROM customer_agents ca
             LEFT JOIN customers c ON c.customer_id = ca.customer_id
+            LEFT JOIN departments d ON d.department_id = ca.department_id
+            LEFT JOIN users u ON u.user_id = ca.user_id
             WHERE ca.customer_id = ?`
         let agentResult = await connection.query(agentQuery, [customerId]);
         customer['agent'] = agentResult[0];
