@@ -17,6 +17,8 @@ router.post('/match', userController.sendOtpSignUp);
 router.get('/', userController.getUsers);
 //active list
 router.get('/wma', userController.getUserWma);
+//customer list
+router.get('/customer', userController.getCustomers);
 //download user
 router.get('/download', userController.getUserDownload);
 // router.get('/test-mail', userController.testMail);

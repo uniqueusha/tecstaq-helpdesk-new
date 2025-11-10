@@ -240,8 +240,7 @@ const createTicket = async (req, res)=>{
     const priority_id = req.body.priority_id ? req.body.priority_id :'';
     const department_id = req.body.department_id ? req.body.department_id :'';
     const subject = req.body.subject ? req.body.subject.trim() :'';
-        const customer_id = req.body.customer_id ? req.body.customer_id :'';
-
+    const customer_id = req.body.customer_id ? req.body.customer_id :'';
     const description = req.body.description ? req.body.description.trim() :'';
     const ticket_status = req.body.ticket_status ? req.body.ticket_status.trim() : null;
     const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
@@ -424,6 +423,8 @@ const updateTicket = async (req, res) => {
     const priority_id = req.body.priority_id ? req.body.priority_id :'';
     const department_id = req.body.department_id ? req.body.department_id :'';
     const subject = req.body.subject ? req.body.subject.trim() :'';
+        const customer_id = req.body.customer_id ? req.body.customer_id :'';
+
     const description = req.body.description ? req.body.description.trim() :'';
     const ticket_status = req.body.ticket_status ? req.body.ticket_status.trim() : '';
     const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
@@ -459,10 +460,10 @@ const updateTicket = async (req, res) => {
         // Update the ticket record with new data
         const updateQuery = `
             UPDATE tickets
-            SET  ticket_category_id = ?, priority_id = ?, department_id = ?, subject = ?, description = ?, ticket_status = ?, closed_at = ?
+            SET  ticket_category_id = ?, priority_id = ?, department_id = ?, subject = ?, customer_id = ?,description = ?, ticket_status = ?, closed_at = ?
             WHERE ticket_id = ?
         `;
-        await connection.query(updateQuery, [  ticket_category_id, priority_id, department_id, subject, description, ticket_status, closed_at, ticketId]);
+        await connection.query(updateQuery, [  ticket_category_id, priority_id, department_id, subject, customer_id, description, ticket_status, closed_at, ticketId]);
 
         const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
         const pdfBuffer = Buffer.from(cleanedBase64, "base64");
@@ -651,7 +652,7 @@ const getAllTickets = async (req, res) => {
         LEFT JOIN users u1 ON u1.user_id = ta.assigned_to
         LEFT JOIN users u2 ON u2.user_id = ta.assigned_by
         LEFT JOIN users u3 ON u3.user_id = att.uploaded_by 
-                LEFT JOIN customers c ON c.customer_id = t.customer_id
+        LEFT JOIN customers c ON c.customer_id = t.customer_id
         WHERE 1`;
 
         if (key) {
@@ -759,7 +760,7 @@ const getTicket = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        const ticketQuery = `SELECT t.*, ta.assigned_to, ta.assigned_by, ta.assigned_at, ta.remarks, att.file_path, att.uploaded_by, u.user_name, tc.name, p.name AS priority_name, d.department_name,
+        const ticketQuery = `SELECT t.*, c.company_name, ta.assigned_to, ta.assigned_by, ta.assigned_at, ta.remarks, att.file_path, att.uploaded_by, u.user_name, tc.name, p.name AS priority_name, d.department_name,
         u1.user_name AS assigned_to_name, u2.user_name AS assigned_by_name, u3.user_name AS uploaded_by_name
         FROM tickets t 
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
@@ -771,6 +772,7 @@ const getTicket = async (req, res) => {
         LEFT JOIN users u1 ON u1.user_id = ta.assigned_to
         LEFT JOIN users u2 ON u2.user_id = ta.assigned_by
         LEFT JOIN users u3 ON u3.user_id = att.uploaded_by
+        LEFT JOIN customers c ON c.customer_id = t.customer_id
         WHERE t.ticket_id = ?`;
         const ticketResult = await connection.query(ticketQuery, [ticketId]);
         if (ticketResult[0].length == 0) {

@@ -1550,6 +1550,80 @@ const email_id = req.body.email_id ? req.body.email_id.trim() : "";
     }
 }
 
+// get Customer list...
+const getCustomers = async (req, res) => {
+    const { page, perPage, key } = req.query;
+
+    // attempt to obtain a database connection
+    let connection = await getConnection();
+
+    try {
+
+        //start a transaction
+        await connection.beginTransaction();
+
+        let getCustomerQuery = `SELECT c.* 
+        FROM customers c 
+        WHERE 1`;
+
+        let countQuery = `SELECT COUNT(*) AS total 
+        FROM customers c 
+        WHERE 1`;
+
+        if (key) {
+            const lowercaseKey = key.toLowerCase().trim();
+            if (lowercaseKey === "activated") {
+                getCustomerQuery += ` AND status = 1`;
+                countQuery += ` AND status = 1`;
+            } else if (lowercaseKey === "deactivated") {
+                getCustomerQuery += ` AND status = 0`;
+                countQuery += ` AND status = 0`;
+            } else {
+                getCustomerQuery += ` AND (LOWER(c.user_name) LIKE '%${lowercaseKey}%' || LOWER(c.comapny_name) LIKE '%${lowercaseKey}%')`;
+                countQuery += ` AND (LOWER(c.user_name) LIKE '%${lowercaseKey}%' || LOWER(c.company_name) LIKE '%${lowercaseKey}%')`;
+            }
+        }
+        getCustomerQuery += " ORDER BY c.cts DESC";
+
+        // Apply pagination if both page and perPage are provided
+        let total = 0;
+        if (page && perPage) {
+            const totalResult = await connection.query(countQuery);
+            total = parseInt(totalResult[0][0].total);
+
+            const start = (page - 1) * perPage;
+            getCustomerQuery += ` LIMIT ${perPage} OFFSET ${start}`;
+        }
+
+        const result = await connection.query(getCustomerQuery);
+        const customer = result[0];
+
+        // Commit the transaction
+        await connection.commit();
+        const data = {
+            status: 200,
+            message: "Customer retrieved successfully",
+            data: customer,
+        };
+
+        // Add pagination information if provided
+        if (page && perPage) {
+            data.pagination = {
+                per_page: perPage,
+                total: total,
+                current_page: page,
+                last_page: Math.ceil(total / perPage),
+            };
+        }
+
+        return res.status(200).json(data);
+    } catch (error) {
+        return error500(error, res);
+    } finally {
+        if (connection) connection.release()
+    }
+}
+
 module.exports = {
   createUser,
   login,
@@ -1571,5 +1645,6 @@ module.exports = {
   getDB,
   signUp,
   checkDomain,
-  sendOtpSignUp
+  sendOtpSignUp,
+  getCustomers
 };
