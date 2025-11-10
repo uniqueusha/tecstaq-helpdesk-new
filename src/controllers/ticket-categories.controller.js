@@ -236,7 +236,7 @@ const getTicketCategories = async (req, res) => {
 
 //all ticket categories list
 const getAllTicketCategories = async (req, res) => {
-    const { page, perPage, key } = req.query;
+    const { page, perPage, key} = req.query;
 
     // attempt to obtain a database connection
     let connection = await getConnection();
@@ -272,6 +272,12 @@ const getAllTicketCategories = async (req, res) => {
                 countQuery += ` AND LOWER(tc.parent_category) LIKE '%${lowercaseKey}%' `;
             }
         }
+
+        if (department_id) {
+            getTicketCategoriesQuery += ` AND tc.department_id = ${department_id}`;
+            countQuery += ` AND tc.department_id = ${department_id}`;
+        }
+
         getTicketCategoriesQuery += " ORDER BY cts DESC";
 
         // Apply pagination if both page and perPage are provided
@@ -314,6 +320,8 @@ const getAllTicketCategories = async (req, res) => {
 
 //get Ticket Categories active...
 const getTicketCategoriesWma = async (req, res) => {
+    const { department_id} = req.query;
+
 
     // attempt to obtain a database connection
     let connection = await getConnection();
