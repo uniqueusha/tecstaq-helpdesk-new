@@ -1668,6 +1668,12 @@ const getCustomer = async (req, res) => {
         }
         const customer = customerResult[0][0];
 
+        let serviceQuery = `SELECT cs.*,s.service_name FROM customer_service cs
+            LEFT JOIN services s ON s.service_id = cs.service_id
+            WHERE cs.customer_id = ?`
+        let serviceResult = await connection.query(serviceQuery, [customerId]);
+        customer['service'] = serviceResult[0];
+
         let agentQuery = `SELECT ca.*,c.customer_name FROM customer_agents ca
             LEFT JOIN customers c ON c.customer_id = ca.customer_id
             WHERE ca.customer_id = ?`
