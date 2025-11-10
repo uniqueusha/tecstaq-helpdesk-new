@@ -300,7 +300,7 @@ const login = async (req, res) => {
 
 // get User list...
 const getUsers = async (req, res) => {
-    const { page, perPage, key } = req.query;
+    const { page, perPage, key, role_id } = req.query;
 
     // attempt to obtain a database connection
     let connection = await getConnection();
@@ -338,6 +338,11 @@ const getUsers = async (req, res) => {
                 getUserQuery += ` AND (LOWER(u.user_name) LIKE '%${lowercaseKey}%' || LOWER(r.role_name) LIKE '%${lowercaseKey}%')`;
                 countQuery += ` AND (LOWER(u.user_name) LIKE '%${lowercaseKey}%' || LOWER(r.role_name) LIKE '%${lowercaseKey}%')`;
             }
+        }
+
+        if (role_id) {
+            getTicketsQuery += ` AND u.role_id = ${customer_id} `;
+            countQuery += ` AND u.role_id = ${customer_id}  `;
         }
         getUserQuery += " ORDER BY u.created_at DESC";
 
@@ -402,6 +407,9 @@ const getUser = async (req, res) => {
         const userResult = await connection.query(userQuery, [userId]);
         if (userResult[0].length == 0) {
             return error422("User Not Found.", res);
+        }
+        if (role_id) {
+            userQuery += ` AND u.role_id = ${customer_id} `;
         }
         const user = userResult[0][0];
     
