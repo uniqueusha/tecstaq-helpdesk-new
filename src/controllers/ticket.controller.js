@@ -56,6 +56,7 @@ const createTicketold = async (req, res)=>{
     const department_id = req.body.department_id ? req.body.department_id :'';
     const subject = req.body.subject ? req.body.subject.trim() :'';
     const customer_id = req.body.customer_id ? req.body.customer_id :'';
+    const service_id = req.body.service_id ? req.body.service_id : '';
     const description = req.body.description ? req.body.description.trim() :'';
     const ticket_status = req.body.ticket_status ? req.body.ticket_status.trim() : null;
     const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
@@ -98,12 +99,12 @@ const createTicketold = async (req, res)=>{
         const closedAtResult = await pool.query(closedAtQuery);
         const closed_at = closedAtResult[0].cts;
 
-        const insertTicketQuery = "INSERT INTO tickets (ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, description, ticket_status, closed_at)VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        const insertTicketResult = await connection.query(insertTicketQuery,[ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, description, ticket_status, closed_at]);
+        const insertTicketQuery = "INSERT INTO tickets (ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, service_id, description, ticket_status, closed_at)VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        const insertTicketResult = await connection.query(insertTicketQuery,[ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, service_id, description, ticket_status, closed_at]);
         const ticket_id = insertTicketResult[0].insertId
 
-      const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
-const pdfBuffer = Buffer.from(cleanedBase64, "base64");
+       const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
+       const pdfBuffer = Buffer.from(cleanedBase64, "base64");
 
 const uploadsDir = path.join(__dirname, "..", "..", "uploads");
 if (!fs.existsSync(uploadsDir)) {

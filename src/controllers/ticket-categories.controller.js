@@ -331,10 +331,15 @@ const getTicketCategoriesWma = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        const ticketCategoriesQuery = `SELECT * FROM ticket_categories
+        let ticketCategoriesQuery = `SELECT tc.*, d.department_name FROM ticket_categories tc
+        LEFT JOIN departments d ON d.department_id = tc.department_id
         
-        WHERE status = 1  ORDER BY parent_category`;
+        WHERE tc.status = 1`;
 
+        if (department_id) {
+            ticketCategoriesQuery += ` AND tc.department_id = ${department_id}`;
+        }
+        ticketCategoriesQuery += ` ORDER BY tc.parent_category`;
         const ticketCategoriesResult = await connection.query(ticketCategoriesQuery);
         const ticketCategories = ticketCategoriesResult[0];
 

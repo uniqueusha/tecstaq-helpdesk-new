@@ -1693,8 +1693,8 @@ const getCustomer = async (req, res) => {
 }
 
 // customer to Services
-const getServicesWma = async (req, res) => {
-     const { user_id} = req.query;
+const getCustomerServicesWma = async (req, res) => {
+     const { customer_id} = req.query;
 
     // attempt to obtain a database connection
     let connection = await getConnection();
@@ -1704,21 +1704,22 @@ const getServicesWma = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        let agentQuery = `SELECT u.*
-        FROM users u
-        WHERE 1 AND u.status = 1 AND u.role_id = 2`;
+        let getCustomerServicesQuery = `SELECT cs.*, s.service_name
+        FROM customer_service cs 
+        LEFT JOIN services s ON cs.service_id = s.service_id
+        WHERE 1 AND cs.status = 1 AND cs.customer_id = ?`;
        
-        agentQuery += ` ORDER BY u.created_at`;
-        const agentResult = await connection.query(agentQuery);
-        const agent = agentResult[0];
+        getCustomerServicesQuery += ` ORDER BY cs.cts`;
+        const getCustomerServicesResult = await connection.query(getCustomerServicesQuery, [customer_id]);
+        const customerService = getCustomerServicesResult[0];
 
         // Commit the transaction
         await connection.commit();
 
         return res.status(200).json({
             status: 200,
-            message: "Customer Agents retrieved successfully.",
-            data: agent,
+            message: "Customer Servide retrieved successfully.",
+            data: customerService,
         });
     } catch (error) {
         return error500(error, res);
@@ -1807,5 +1808,6 @@ module.exports = {
   sendOtpSignUp,
   getCustomers,
   getCustomer,
-  onStatusChangeCustomer
+  onStatusChangeCustomer,
+  getCustomerServicesWma
 };
