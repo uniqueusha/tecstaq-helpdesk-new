@@ -626,7 +626,7 @@ const getAllTickets = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        let getTicketsQuery = `SELECT t.*, ta.assigned_to, ta.assigned_by, ta.assigned_at, ta.remarks, att.file_path, att.uploaded_by, u.user_name, tc.name, p.name AS priority_name, d.department_name,
+        let getTicketsQuery = `SELECT t.*, c.company_name, ta.assigned_to, ta.assigned_by, ta.assigned_at, ta.remarks, att.file_path, att.uploaded_by, u.user_name, tc.name, p.name AS priority_name, d.department_name,
         u1.user_name AS assigned_to_name, u2.user_name AS assigned_by_name, u3.user_name AS uploaded_by_name
         FROM tickets t 
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
@@ -638,6 +638,7 @@ const getAllTickets = async (req, res) => {
         LEFT JOIN users u1 ON u1.user_id = ta.assigned_to
         LEFT JOIN users u2 ON u2.user_id = ta.assigned_by
         LEFT JOIN users u3 ON u3.user_id = att.uploaded_by 
+        LEFT JOIN customers c ON c.customer_id = t.customer_id
         WHERE 1 `;
 
         let countQuery = `SELECT COUNT(*) AS total FROM tickets t
@@ -650,6 +651,7 @@ const getAllTickets = async (req, res) => {
         LEFT JOIN users u1 ON u1.user_id = ta.assigned_to
         LEFT JOIN users u2 ON u2.user_id = ta.assigned_by
         LEFT JOIN users u3 ON u3.user_id = att.uploaded_by 
+                LEFT JOIN customers c ON customer_id = t.customer_id
         WHERE 1`;
 
         if (key) {
