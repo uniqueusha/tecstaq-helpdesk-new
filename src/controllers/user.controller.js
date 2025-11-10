@@ -1727,6 +1727,62 @@ const getServicesWma = async (req, res) => {
     }
 }
 
+// customer status change
+const onStatusChangeCustomer = async (req, res) => {
+    const customerId = parseInt(req.params.id);
+    const status = parseInt(req.query.status); // Validate and parse the status parameter
+
+
+    // attempt to obtain a database connection
+    let connection = await getConnection();
+
+    try {
+
+        //start a transaction
+        await connection.beginTransaction();
+
+        // Check if the customer exists
+        const customerQuery = "SELECT * FROM customers WHERE customer_id = ? ";
+        const customerResult = await connection.query(customerQuery, [customerId]);
+
+        if (customerResult[0].length == 0) {
+            return res.status(404).json({
+                status: 404,
+                message: "Customer not found.",
+            });
+        }
+
+        // Validate the status parameter
+        if (status !== 0 && status !== 1) {
+            return res.status(400).json({
+                status: 400,
+                message: "Invalid status value. Status must be 0 (inactive) or 1 (active).",
+            });
+        }
+
+        // Soft update the customer
+        const updateQuery = `
+            UPDATE customers
+            SET status = ?
+            WHERE customer_id = ?
+        `;
+
+        await connection.query(updateQuery, [status, customerId]);
+
+        const statusMessage = status === 1 ? "activated" : "deactivated";
+        // Commit the transaction
+        await connection.commit();
+        return res.status(200).json({
+            status: 200,
+            message: `Customer ${statusMessage} successfully.`,
+        });
+    } catch (error) {
+        return error500(error, res);
+    } finally {
+        if (connection) connection.release()
+    }
+};
+
 module.exports = {
   createUser,
   login,
@@ -1750,5 +1806,6 @@ module.exports = {
   checkDomain,
   sendOtpSignUp,
   getCustomers,
-  getCustomer
+  getCustomer,
+  onStatusChangeCustomer
 };

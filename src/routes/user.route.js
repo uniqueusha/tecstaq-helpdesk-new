@@ -38,6 +38,8 @@ router.put('/change-password',userController.onChangePassword);
 router.put('/:id', userController.updateUser);
 //status change
 router.patch('/:id', userController.onStatusChange);
+//status change customer
+router.patch('/customer/:id', userController.onStatusChangeCustomer);
 
 router.post('/send-otp',userController.sendOtp);
 router.post('/verify-otp',userController.verifyOtp);
