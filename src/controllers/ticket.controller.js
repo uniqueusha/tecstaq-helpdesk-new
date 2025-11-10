@@ -987,7 +987,7 @@ const getTodayOpenTicketList = async (req, res) => {
         WHERE 1 AND t.ticket_status = "open" AND DATE(t.created_at) = ?`;
 
         let countQuery = `SELECT COUNT(*) AS total FROM tickets t
-LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
+        LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
         LEFT JOIN ticket_attachments att ON att.ticket_id = t.ticket_id
         LEFT JOIN users u ON u.user_id = t.user_id
         LEFT JOIN ticket_categories tc ON tc.ticket_category_id = t.ticket_category_id
@@ -1093,13 +1093,13 @@ const getDocumentDownload = async (req, res) => {
 //download ticket
 const getTicketDownload = async (req, res) => {
 
-    const { key, fromDate, toDate, user_id, assigned_to, priority_id, department_id, ticket_category_id, ticket_status} = req.query;
+    const { key, fromDate, toDate, user_id, customer_id, assigned_to, priority_id, department_id, ticket_category_id, ticket_status} = req.query;
 
     let connection = await getConnection();
     try {
         await connection.beginTransaction();
 
-        let getTicketQuery = `SELECT t.*, ta.assigned_to, ta.assigned_by, ta.assigned_at, ta.remarks, att.file_path, att.uploaded_by, u.user_name, tc.name, p.name AS priority_name, d.department_name,
+        let getTicketQuery = `SELECT t.*, c.company_name, ta.assigned_to, ta.assigned_by, ta.assigned_at, ta.remarks, att.file_path, att.uploaded_by, u.user_name, tc.name, p.name AS priority_name, d.department_name,
         u1.user_name AS assigned_to_name, u2.user_name AS assigned_by_name, u3.user_name AS uploaded_by_name
         FROM tickets t 
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
@@ -1111,6 +1111,7 @@ const getTicketDownload = async (req, res) => {
         LEFT JOIN users u1 ON u1.user_id = ta.assigned_to
         LEFT JOIN users u2 ON u2.user_id = ta.assigned_by
         LEFT JOIN users u3 ON u3.user_id = att.uploaded_by 
+        LEFT JOIN customers c ON c.customer_id = t.customer_id
         WHERE 1 `;
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
@@ -1144,6 +1145,10 @@ const getTicketDownload = async (req, res) => {
         if (ticket_status) {
             getTicketQuery += ` AND LOWER(t.ticket_status) = LOWER('${ticket_status}')`;
         } 
+
+        if (customer_id) {
+            getTicketQuery += ` AND t.customer_id = ${customer_id} `;
+        }
         getTicketQuery += " ORDER BY tc.cts DESC";
 
         let result = await connection.query(getTicketQuery);
