@@ -118,8 +118,8 @@ const createUser = async (req, res) => {
         const selectResult = await connection.query(selectCustomerRoleQuery,[role_id]);
         const customerRole = selectResult[0][0];
         if(customerRole.role_name === 'Customer'){
-            const insertCustomerQuery = `INSERT INTO customers (customer_name, company_name, email_id, address, phone_number, domain, isSite) VALUES (?, ?, ?, ?, ?, ?, ?)`;
-            const insertCustomerValues = [ user_name, company_name, email_id, address, phone_number, domain, isSite ];
+            const insertCustomerQuery = `INSERT INTO customers (customer_name, company_name, email_id, address, phone_number, domain, isSite, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+            const insertCustomerValues = [ user_name, company_name, email_id, address, phone_number, domain, isSite, user_id ];
             const insertCustomerResult = await connection.query(insertCustomerQuery, insertCustomerValues);
             const customerid = insertCustomerResult[0].insertId;
 
