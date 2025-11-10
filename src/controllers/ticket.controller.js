@@ -1215,11 +1215,12 @@ const getStatusList = async (req, res) => {
 
         // Employee count
 
-        let statusListQuery = `SELECT t.*, u.user_name, tc.name, ta.assigned_to, u1.user_name AS assigned_user_name FROM tickets t
+        let statusListQuery = `SELECT t.*,c.company_name, u.user_name, tc.name, ta.assigned_to, u1.user_name AS assigned_user_name FROM tickets t
         LEFT JOIN users u ON u.user_id = t.user_id
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
         LEFT JOIN users u1 ON u1.user_id = ta.assigned_to
         LEFT JOIN ticket_categories tc ON tc.ticket_category_id = t.ticket_category_id
+        LEFT JOIN customers c ON c.customer_id = t.customer_id
         WHERE 1 AND t.ticket_status = '${ticket_status}'`;
 
         let countQuery = `SELECT COUNT(*) AS total FROM tickets t
@@ -1227,6 +1228,7 @@ const getStatusList = async (req, res) => {
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
         LEFT JOIN users u1 ON u1.user_id = ta.assigned_to
         LEFT JOIN ticket_categories tc ON tc.ticket_category_id = t.ticket_category_id
+        LEFT JOIN customers c ON c.customer_id = t.customer_id
         WHERE 1 AND t.ticket_status = '${ticket_status}'`;
 
         if (key) {
