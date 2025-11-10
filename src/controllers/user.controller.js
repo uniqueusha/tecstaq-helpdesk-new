@@ -1645,6 +1645,12 @@ const getCustomer = async (req, res) => {
         }
         const customer = customerResult[0][0];
 
+        let agentQuery = `SELECT ca.*,c.customer_name FROM customer_agents ca
+            LEFT JOIN customers c ON c.customer_id = ca.customer_id
+            WHERE ca.customer_id = ?`
+        let agentResult = await connection.query(agentQuery, [customerId]);
+        customer['agent'] = agentResult[0];
+
         return res.status(200).json({
             status: 200,
             message: "Customer Retrived Successfully",
