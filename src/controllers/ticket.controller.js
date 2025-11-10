@@ -651,7 +651,7 @@ const getAllTickets = async (req, res) => {
         LEFT JOIN users u1 ON u1.user_id = ta.assigned_to
         LEFT JOIN users u2 ON u2.user_id = ta.assigned_by
         LEFT JOIN users u3 ON u3.user_id = att.uploaded_by 
-                LEFT JOIN customers c ON customer_id = t.customer_id
+                LEFT JOIN customers c ON c.customer_id = t.customer_id
         WHERE 1`;
 
         if (key) {
