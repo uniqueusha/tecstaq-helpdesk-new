@@ -341,8 +341,8 @@ const getUsers = async (req, res) => {
         }
 
         if (role_id) {
-            getTicketsQuery += ` AND u.role_id = ${customer_id} `;
-            countQuery += ` AND u.role_id = ${customer_id}  `;
+            getTicketsQuery += ` AND u.role_id = ${role_id} `;
+            countQuery += ` AND u.role_id = ${role_id}  `;
         }
         getUserQuery += " ORDER BY u.created_at DESC";
 
@@ -379,6 +379,8 @@ const getUsers = async (req, res) => {
 
         return res.status(200).json(data);
     } catch (error) {
+        
+        
         return error500(error, res);
     } finally {
         if (connection) connection.release()
@@ -388,6 +390,8 @@ const getUsers = async (req, res) => {
 //User by id
 const getUser = async (req, res) => {
     const userId = parseInt(req.params.id);
+        const { role_id } = req.query;
+
 
     // attempt to obtain a database connection
     let connection = await getConnection();
@@ -397,19 +401,19 @@ const getUser = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        const userQuery = `SELECT u.*, d.department_name, r.role_name 
+        let userQuery = `SELECT u.*, d.department_name, r.role_name 
         FROM users u 
         LEFT JOIN departments d
         ON d.department_id = u.department_id
         LEFT JOIN roles r
         ON r.role_id = u.role_id
         WHERE 1 AND u.user_id = ? `;
-        const userResult = await connection.query(userQuery, [userId]);
+        let userResult = await connection.query(userQuery, [userId]);
         if (userResult[0].length == 0) {
             return error422("User Not Found.", res);
         }
         if (role_id) {
-            userQuery += ` AND u.role_id = ${customer_id} `;
+            userQuery += ` AND u.role_id = ${role_id} `;
         }
         const user = userResult[0][0];
     
@@ -427,6 +431,7 @@ const getUser = async (req, res) => {
             data: user
         });
     } catch (error) {
+        console.log(error);
         return error500(error, res);
     } finally {
         if (connection) connection.release()
