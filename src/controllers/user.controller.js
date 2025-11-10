@@ -1022,7 +1022,7 @@ const sendOtp = async (req, res) => {
             //    replyTo: "rohitlandage86@gmail.com", // Sets the email address for recipient responses.
             //  bcc: "sushantsjamdade@gmail.com",
             // bcc: "sushantsjamdade@gmail.com",
-            subject: "Reset Your Tecstaq-crm Password – OTP Inside", // Subject line.
+            subject: "Reset Your Tecstaq-helpdesk Password – OTP Inside", // Subject line.
             html: message,
         };
 
@@ -1722,7 +1722,7 @@ const email_id = req.body.email_id ? req.body.email_id.trim() : "";
             //    replyTo: "rohitlandage86@gmail.com", // Sets the email address for recipient responses.
             //  bcc: "sushantsjamdade@gmail.com",
             // bcc: "sushantsjamdade@gmail.com",
-            subject: "Reset Your Tecstaq-crm Password – OTP Inside", // Subject line.
+            subject: "Reset Your Tecstaq-helpdesk Password – OTP Inside", // Subject line.
             html: message,
         };
 
