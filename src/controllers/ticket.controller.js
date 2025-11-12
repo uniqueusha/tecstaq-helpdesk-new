@@ -827,7 +827,7 @@ const getTicketStatusCount = async (req, res) => {
             totalCountQuery += ` AND t.user_id = ${user_id}`;
         }
         if (customer_id) {
-            totalCountQuery += ` AND c.customer_id = ${customer_id}`;
+            totalCountQuery += ` AND t.customer_id = ${customer_id}`;
         }
 
         const totalCountResult = await connection.query(totalCountQuery);
@@ -847,7 +847,7 @@ const getTicketStatusCount = async (req, res) => {
             statusCountQuery += ` AND t.user_id = ${user_id}`;
         }
         if (customer_id) {
-            statusCountQuery += ` AND c.customer_id = ${customer_id}`;
+            statusCountQuery += ` AND t.customer_id = ${customer_id}`;
         }
         statusCountQuery += ` GROUP BY ticket_status`
         const [statusCountResult] = await connection.query(statusCountQuery);
@@ -922,7 +922,7 @@ const getMonthWiseStatusCount = async (req, res) => {
             statusCountQuery += ` AND (ta.assigned_to = '${user_id}' OR t.user_id = '${user_id}')`;
         }
         if (customer_id) {
-            statusCountQuery += ` AND c.customer_id = '${customer_id}'`;
+            statusCountQuery += ` AND t.customer_id = '${customer_id}'`;
         }
 
         statusCountQuery += ` GROUP BY DATE(t.created_at) ORDER BY DATE(t.created_at)`;
