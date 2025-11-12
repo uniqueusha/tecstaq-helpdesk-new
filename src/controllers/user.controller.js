@@ -483,7 +483,7 @@ const login = async (req, res) => {
 
 // get User list...
 const getUsers = async (req, res) => {
-    const { page, perPage, key, role_id, user_id } = req.query;
+    const { page, perPage, key, role_id, user_id, customer_id } = req.query;
 
     // attempt to obtain a database connection
     let connection = await getConnection();
@@ -493,12 +493,11 @@ const getUsers = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        let getUserQuery = `SELECT u.*, d.department_name, r.role_name 
+        let getUserQuery = `SELECT u.*,c.customer_id, d.department_name, r.role_name 
         FROM users u 
-        LEFT JOIN departments d
-        ON d.department_id = u.department_id
-        LEFT JOIN roles r
-        ON r.role_id = u.role_id
+        LEFT JOIN departments d ON d.department_id = u.department_id
+        LEFT JOIN roles r ON r.role_id = u.role_id
+        LEFT JOIN customer c ON c.user_id = u.user_id
         WHERE 1 `;
 
         let countQuery = `SELECT COUNT(*) AS total FROM users u 
@@ -506,6 +505,7 @@ const getUsers = async (req, res) => {
         ON d.department_id = u.department_id
         LEFT JOIN roles r
         ON r.role_id = u.role_id
+        LEFT JOIN customer c ON c.user_id = u.user_id
         WHERE 1 `;
 
         if (key) {
@@ -525,6 +525,10 @@ const getUsers = async (req, res) => {
         if (role_id) {
             getUserQuery += ` AND u.role_id = ${role_id} `;
             countQuery += ` AND u.role_id = ${role_id}  `;
+        }
+        if (customer_id) {
+            getUserQuery += ` AND c.customer_id = ${customer_id} `;
+            countQuery += ` AND c.customer_id = ${customer_id}  `;
         }
 
         if (user_id) {
