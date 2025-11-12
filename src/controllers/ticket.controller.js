@@ -871,7 +871,7 @@ const getTicketStatusCount = async (req, res) => {
 };
 
 const getMonthWiseStatusCount = async (req, res) => {
-    const { user_id, assigned_to } = req.query;
+    const { user_id, customer_id } = req.query;
 
     const currentDate = new Date();
     const startDate = new Date(currentDate.getFullYear(), currentDate.getMonth(), 1); // 1st of the month
@@ -897,15 +897,19 @@ const getMonthWiseStatusCount = async (req, res) => {
         // Fetch open and close status counts grouped by date
         let statusCountQuery = `
         SELECT 
-          DATE(t.created_at) AS date, ta.assigned_to,
+          DATE(t.created_at) AS date, ta.assigned_to, c.customer_id
           COUNT(CASE WHEN t.ticket_status = "Open" THEN 1 END) AS open_count,
           COUNT(CASE WHEN t.ticket_status = "Closed" THEN 1 END) AS completed_count
         FROM tickets t
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
+        LEFT JOIN customers c ON c.user_id = c.user_id
         WHERE DATE(t.created_at) BETWEEN ? AND ?`;
 
         if (user_id) {
             statusCountQuery += ` AND (ta.assigned_to = '${user_id}' OR t.user_id = '${user_id}')`;
+        }
+        if (customer_id) {
+            statusCountQuery += ` AND c.customer_id = '${customer_id}'`;
         }
 
         statusCountQuery += ` GROUP BY DATE(t.created_at) ORDER BY DATE(t.created_at)`;
@@ -975,7 +979,7 @@ const getTodayOpenTicketList = async (req, res) => {
         // Start a transaction
         await connection.beginTransaction();
 
-        let todayOpenTicketQuery = `SELECT t.*, u.user_name,ta.assigned_to, tc.name, p.name AS priority_name, d.department_name, u.user_name AS assigned_name 
+        let todayOpenTicketQuery = `SELECT t.*, c.customer_id, u.user_name,ta.assigned_to, tc.name, p.name AS priority_name, d.department_name, u.user_name AS assigned_name 
         FROM tickets t 
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
         LEFT JOIN ticket_attachments att ON att.ticket_id = t.ticket_id
@@ -984,6 +988,7 @@ const getTodayOpenTicketList = async (req, res) => {
         LEFT JOIN ticket_categories tc ON tc.ticket_category_id = t.ticket_category_id
         LEFT JOIN priorities p ON p.priority_id = t.priority_id
         LEFT JOIN departments d ON d.department_id = t.department_id
+        LEFT JOIN customers c ON c.user_id = c.user_id
         WHERE 1 AND t.ticket_status = "open" AND DATE(t.created_at) = ?`;
 
         let countQuery = `SELECT COUNT(*) AS total FROM tickets t
@@ -993,6 +998,7 @@ const getTodayOpenTicketList = async (req, res) => {
         LEFT JOIN ticket_categories tc ON tc.ticket_category_id = t.ticket_category_id
         LEFT JOIN priorities p ON p.priority_id = t.priority_id
         LEFT JOIN departments d ON d.department_id = t.department_id
+        LEFT JOIN customers c ON c.user_id = c.user_id
         WHERE 1 AND t.ticket_status = "open" AND DATE(t.created_at) = ?`;
 
         // if (key) {
@@ -1215,7 +1221,7 @@ const getStatusList = async (req, res) => {
 
         // Employee count
 
-        let statusListQuery = `SELECT t.*,c.company_name, u.user_name, tc.name, ta.assigned_to, u1.user_name AS assigned_user_name FROM tickets t
+        let statusListQuery = `SELECT t.*,c.company_name,c.customer_id, u.user_name, tc.name, ta.assigned_to, u1.user_name AS assigned_user_name FROM tickets t
         LEFT JOIN users u ON u.user_id = t.user_id
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
         LEFT JOIN users u1 ON u1.user_id = ta.assigned_to
@@ -1240,6 +1246,11 @@ const getStatusList = async (req, res) => {
         if (user_id) {
             statusListQuery += ` AND t.user_id = ${user_id}`;
             countQuery += ` AND t.user_id = ${user_id}`;
+        }
+
+         if (customer_id) {
+            statusListQuery += ` AND c.customer_id = ${customer_id}`;
+            countQuery += ` AND c.customer_id = ${customer_id}`;
         }
 
         statusListQuery += " ORDER BY t.created_at DESC";
