@@ -251,9 +251,7 @@ const createUser = async (req, res) => {
     return error422("Email id is required.", res);
   } else if (!phone_number) {
     return error422("Phone number is required.", res);
-  } else if (!password) {
-    return error422("Password is required.", res);
-  } else if (!role_id && role_id != 0) {
+  }  else if (!role_id && role_id != 0) {
     return error422("role_id is required.", res);
   } else if (!department_id && department_id != 0) {
     return error422("Department is required.", res);
@@ -284,6 +282,20 @@ const createUser = async (req, res) => {
         const insertUserValues = [ user_name, email_id, phone_number, role_id, department_id ];
         const insertuserResult = await connection.query(insertUserQuery, insertUserValues);
         const user_id = insertuserResult[0].insertId;
+
+        let length = 8,
+        charset ="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+        password = "";
+        for (let i = 0, n = charset.length; i < length; ++i) {
+            password += charset.charAt(Math.floor(Math.random() * n));
+        }
+        const hash = await bcrypt.hash(password, 10); // Hash the password using bcrypt
+
+        //insert into Untitled
+        const insertUntitledQuery = "INSERT INTO untitled (user_id, extenstions) VALUES (?,?)";
+        const insertUntitledValues = [user_id, hash];
+        const untitledResult = await connection.query(insertUntitledQuery, insertUntitledValues)
+
 
         //role-customer
         const selectCustomerRoleQuery = `SELECT * FROM roles WHERE role_id = ?`
@@ -328,20 +340,7 @@ const createUser = async (req, res) => {
         }
     }
 
-    let length = 8,
-      charset =
-        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-      password = "";
-    for (let i = 0, n = charset.length; i < length; ++i) {
-      password += charset.charAt(Math.floor(Math.random() * n));
-    }
-        const hash = await bcrypt.hash(password, 10); // Hash the password using bcrypt
-
-        //insert into Untitled
-        const insertUntitledQuery = "INSERT INTO untitled (user_id, extenstions) VALUES (?,?)";
-        const insertUntitledValues = [user_id, hash];
-        const untitledResult = await connection.query(insertUntitledQuery, insertUntitledValues)
-
+    
         //commit the transation
         await connection.commit();
 
@@ -503,7 +502,6 @@ const getUsers = async (req, res) => {
         WHERE 1`;
 
         let countQuery = `SELECT COUNT(*) AS total FROM users u 
-       
         LEFT JOIN departments d
         ON d.department_id = u.department_id
         LEFT JOIN roles r
@@ -574,8 +572,7 @@ const getUsers = async (req, res) => {
 //User by id
 const getUser = async (req, res) => {
     const userId = parseInt(req.params.id);
-        const { role_id } = req.query;
-
+    const { role_id } = req.query;
 
     // attempt to obtain a database connection
     let connection = await getConnection();
@@ -615,7 +612,6 @@ const getUser = async (req, res) => {
             data: user
         });
     } catch (error) {
-        console.log(error);
         return error500(error, res);
     } finally {
         if (connection) connection.release()

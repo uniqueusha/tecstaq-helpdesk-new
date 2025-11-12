@@ -862,7 +862,6 @@ const getTicketStatusCount = async (req, res) => {
         };
         await connection.commit();
         return res.status(200).json(data);
-
     } catch (error) {
         await connection.rollback();
         return error500(error, res);
