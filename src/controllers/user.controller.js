@@ -141,7 +141,7 @@ const createUserOld = async (req, res) => {
         }
         
        
-        if (role_id == 3) {
+        if (customerRole.role_name === 'Customer') {
         let customerAgentArray = customerAgent;
             for (let i = 0; i < customerAgentArray.length; i++) {
                 const elements = customerAgentArray[i];
@@ -499,14 +499,14 @@ const getUsers = async (req, res) => {
         ON d.department_id = u.department_id
         LEFT JOIN roles r
         ON r.role_id = u.role_id
-        WHERE 1 AND role != 3`;
+        WHERE 1 `;
 
         let countQuery = `SELECT COUNT(*) AS total FROM users u 
         LEFT JOIN departments d
         ON d.department_id = u.department_id
         LEFT JOIN roles r
         ON r.role_id = u.role_id
-        WHERE 1 AND role != 3`;
+        WHERE 1 `;
 
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
@@ -561,8 +561,6 @@ const getUsers = async (req, res) => {
 
         return res.status(200).json(data);
     } catch (error) {
-        
-        
         return error500(error, res);
     } finally {
         if (connection) connection.release()
