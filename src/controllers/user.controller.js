@@ -243,7 +243,7 @@ const createUser = async (req, res) => {
   const isSite = req.body.isSite ? req.body.isSite : '';
   const serviceData = req.body.serviceData ? req.body.serviceData : [];
   const customerAgent = req.body.customerAgent ? req.body.customerAgent :[];
-  const password = "123456";
+//   const password = "123456";
 
   if (!user_name) {
     return error422("User name is required.", res);
@@ -326,6 +326,14 @@ const createUser = async (req, res) => {
                 const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
             }
         }
+    }
+
+    let length = 8,
+      charset =
+        "abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+      password = "";
+    for (let i = 0, n = charset.length; i < length; ++i) {
+      password += charset.charAt(Math.floor(Math.random() * n));
     }
         const hash = await bcrypt.hash(password, 10); // Hash the password using bcrypt
 
@@ -447,12 +455,16 @@ const login = async (req, res) => {
             "secret_this_should_be", // Use environment variable for secret key
             { expiresIn: "1h" }
         );
-        const userDataQuery = `SELECT u.*, d.department_name, r.role_name FROM users u
+
+        
+        const userDataQuery = `SELECT u.*, d.department_name, r.role_name,c.customer_id FROM users u
         LEFT JOIN departments d ON d.department_id = u.department_id
         LEFT JOIN roles r ON r.role_id = u.role_id
+        LEFT JOIN customers c ON c.user_id = u.user_id
         WHERE u.user_id = ? `;
         let userDataResult = await connection.query(userDataQuery, [check_user.user_id]);
 
+        
         // Commit the transaction
         await connection.commit();
         return res.status(200).json({
@@ -1499,7 +1511,7 @@ const signUp = async (req, res) => {
   const phone_number = req.body.phone_number ? req.body.phone_number : null;
   const domain = req.body.domain ? req.body.domain.trim() : "";
   const role_id = 3;
-  const password = "123456";
+//   const password = "123456";
   
   if (!user_name) {
     return error422("User name is required.", res);
@@ -1533,6 +1545,12 @@ const signUp = async (req, res) => {
         const insertuserResult = await connection.query(insertUserQuery, insertUserValues);
         const user_id = insertuserResult[0].insertId;
 
+        let length = 8,
+        charset ="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+        password = "";
+        for (let i = 0, n = charset.length; i < length; ++i) {
+            password += charset.charAt(Math.floor(Math.random() * n));
+        }
         const hash = await bcrypt.hash(password, 10); // Hash the password using bcrypt
 
         //insert into Untitled
