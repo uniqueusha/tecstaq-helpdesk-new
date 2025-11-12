@@ -499,14 +499,14 @@ const getUsers = async (req, res) => {
         ON d.department_id = u.department_id
         LEFT JOIN roles r
         ON r.role_id = u.role_id
-        WHERE 1`;
+        WHERE 1 AND role != 3`;
 
         let countQuery = `SELECT COUNT(*) AS total FROM users u 
         LEFT JOIN departments d
         ON d.department_id = u.department_id
         LEFT JOIN roles r
         ON r.role_id = u.role_id
-        WHERE 1`;
+        WHERE 1 AND role != 3`;
 
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
