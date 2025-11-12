@@ -1544,16 +1544,16 @@ const signUp = async (req, res) => {
         
         const customerId = domainCustomerResult[0][0].customer_id;
         
-        //insert into sign up
-        const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain, customer_id) VALUES (?, ?, ?, ?, ?)`;
-        const insertSignUpValues = [ user_name, email_id, phone_number, domain, customerId ];
-        const insertSignUpResult = await connection.query(insertSignUpQuery, insertSignUpValues);
-        
         const insertUserQuery = `INSERT INTO users (user_name, email_id, phone_number, role_id) VALUES (?, ?, ?, ?)`;
         const insertUserValues = [ user_name, email_id, phone_number, role_id ];
         const insertuserResult = await connection.query(insertUserQuery, insertUserValues);
         const user_id = insertuserResult[0].insertId;
-
+        
+        //insert into sign up
+        const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain, customer_id, user_id) VALUES (?, ?, ?, ?, ?, ?)`;
+        const insertSignUpValues = [ user_name, email_id, phone_number, domain, customerId, user_id ];
+        const insertSignUpResult = await connection.query(insertSignUpQuery, insertSignUpValues);
+        
         let length = 8,
         charset ="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
         password = "";
