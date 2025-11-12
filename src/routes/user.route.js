@@ -23,7 +23,7 @@ router.get('/customer', userController.getCustomers);
 router.get('/download', userController.getUserDownload);
 // router.get('/test-mail', userController.testMail);
 //active customer agent
-router.get('/customer-wma', userController.getAgentsWma);
+router.get('/customer-wma', userController.getCustomersWma);
 //active technician
 router.get('/technician-wma', userController.getTechnicianWma);
 //customer under services

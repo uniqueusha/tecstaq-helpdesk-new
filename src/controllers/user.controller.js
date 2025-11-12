@@ -846,8 +846,8 @@ const getTechnicianWma = async (req, res) => {
     }
 }
 
-//agent
-const getAgentsWma = async (req, res) => {
+//Customer active
+const getCustomersWma = async (req, res) => {
      const { user_id} = req.query;
 
     // attempt to obtain a database connection
@@ -858,21 +858,23 @@ const getAgentsWma = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        let agentQuery = `SELECT u.*
-        FROM users u
-        WHERE 1 AND u.status = 1 AND u.role_id = 2`;
-       
-        agentQuery += ` ORDER BY u.created_at`;
-        const agentResult = await connection.query(agentQuery);
-        const agent = agentResult[0];
+        let customerQuery = `SELECT c.*
+        FROM customers c
+        WHERE 1 AND c.status = 1 `;
+        if (user_id){
+            customerQuery += ` AND c.user_id = ${user_id}`;
+        }
+        customerQuery += ` ORDER BY c.cts`;
+        const customerResult = await connection.query(customerQuery);
+        const customer = customerResult[0];
 
         // Commit the transaction
         await connection.commit();
 
         return res.status(200).json({
             status: 200,
-            message: "Customer Agents retrieved successfully.",
-            data: agent,
+            message: "Customer retrieved successfully.",
+            data: customer,
         });
     } catch (error) {
         return error500(error, res);
@@ -1990,7 +1992,7 @@ module.exports = {
   login,
   getUsers,
   getUserWma,
-  getAgentsWma,
+  getCustomersWma,
   getTechnicianWma,
   getUser,
   updateUser,
