@@ -902,7 +902,7 @@ const getMonthWiseStatusCount = async (req, res) => {
           COUNT(CASE WHEN t.ticket_status = "Closed" THEN 1 END) AS completed_count
         FROM tickets t
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
-        LEFT JOIN customers c ON c.user_id = c.user_id
+        LEFT JOIN customers c ON c.user_id = t.user_id
         WHERE DATE(t.created_at) BETWEEN ? AND ?`;
 
         if (user_id) {
