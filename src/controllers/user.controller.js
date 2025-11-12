@@ -497,7 +497,7 @@ const getUsers = async (req, res) => {
         FROM users u 
         LEFT JOIN departments d ON d.department_id = u.department_id
         LEFT JOIN roles r ON r.role_id = u.role_id
-        LEFT JOIN customer c ON c.user_id = u.user_id
+        LEFT JOIN customers c ON c.user_id = u.user_id
         WHERE 1 `;
 
         let countQuery = `SELECT COUNT(*) AS total FROM users u 
@@ -505,7 +505,7 @@ const getUsers = async (req, res) => {
         ON d.department_id = u.department_id
         LEFT JOIN roles r
         ON r.role_id = u.role_id
-        LEFT JOIN customer c ON c.user_id = u.user_id
+        LEFT JOIN customers c ON c.user_id = u.user_id
         WHERE 1 `;
 
         if (key) {
