@@ -897,7 +897,7 @@ const getMonthWiseStatusCount = async (req, res) => {
         // Fetch open and close status counts grouped by date
         let statusCountQuery = `
         SELECT 
-          DATE(t.created_at) AS date, ta.assigned_to, c.customer_id
+          DATE(t.created_at) AS date, ta.assigned_to, c.customer_id,
           COUNT(CASE WHEN t.ticket_status = "Open" THEN 1 END) AS open_count,
           COUNT(CASE WHEN t.ticket_status = "Closed" THEN 1 END) AS completed_count
         FROM tickets t
@@ -1211,7 +1211,7 @@ const getTicketDownload = async (req, res) => {
 
 //status list
 const getStatusList = async (req, res) => {
-    const { page, perPage, key, user_id, ticket_status } = req.query;
+    const { page, perPage, key, user_id, ticket_status, customer_id } = req.query;
 
     let connection = await getConnection();
 
