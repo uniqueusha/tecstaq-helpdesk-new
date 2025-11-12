@@ -483,7 +483,7 @@ const login = async (req, res) => {
 
 // get User list...
 const getUsers = async (req, res) => {
-    const { page, perPage, key, role_id } = req.query;
+    const { page, perPage, key, role_id, user_id } = req.query;
 
     // attempt to obtain a database connection
     let connection = await getConnection();
@@ -525,6 +525,11 @@ const getUsers = async (req, res) => {
         if (role_id) {
             getUserQuery += ` AND u.role_id = ${role_id} `;
             countQuery += ` AND u.role_id = ${role_id}  `;
+        }
+
+        if (user_id) {
+            getUserQuery += ` AND u.user_id = ${user_id} `;
+            countQuery += ` AND u.user_id = ${user_id}  `;
         }
         getUserQuery += " ORDER BY u.created_at DESC";
 
