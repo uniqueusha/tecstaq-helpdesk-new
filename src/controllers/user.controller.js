@@ -1534,9 +1534,13 @@ const signUp = async (req, res) => {
     try {
         //Start the transaction
         await connection.beginTransaction();
+
+        const domainCustomerQuery = ` SELECT * FROM customers WHERE LOWER(TRIM(domain)) = ?`;
+        const domainCustomerResult = await connection.query(domainCustomerQuery, [domain.toLowerCase()]);
+        const customerId = domainCustomerResult[0].customer_id;
         //insert into sign up
-        const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain ) VALUES (?, ?, ?, ?)`;
-        const insertSignUpValues = [ user_name, email_id, phone_number, domain ];
+        const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain, customer_id) VALUES (?, ?, ?, ?, ?)`;
+        const insertSignUpValues = [ user_name, email_id, phone_number, domain, customerId ];
         const insertSignUpResult = await connection.query(insertSignUpQuery, insertSignUpValues);
         
         const insertUserQuery = `INSERT INTO users (user_name, email_id, phone_number, role_id) VALUES (?, ?, ?, ?)`;
