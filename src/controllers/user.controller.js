@@ -523,7 +523,7 @@ const getUsers = async (req, res) => {
         }
 
         if (role_id) {
-            getTicketsQuery += ` AND u.role_id = ${role_id} `;
+            getUserQuery += ` AND u.role_id = ${role_id} `;
             countQuery += ` AND u.role_id = ${role_id}  `;
         }
         getUserQuery += " ORDER BY u.created_at DESC";
