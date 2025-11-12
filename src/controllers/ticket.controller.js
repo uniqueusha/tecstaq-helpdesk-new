@@ -805,23 +805,29 @@ const getTicket = async (req, res) => {
 
 //dashboard ticket status count
 const getTicketStatusCount = async (req, res) => {
-    const { user_id, assigned_to } = req.query;
+    const { user_id, customer_id } = req.query;
     let connection = await getConnection();
 
     try {
         await connection.beginTransaction();
 
         let ticket_status_total_count = 0;
-          
+
+        
+       
 
         // Step 1: Get total count of all tickets (with filters if needed)
         let totalCountQuery = `
-            SELECT COUNT(*) AS total 
-            FROM tickets 
+            SELECT COUNT(*) AS total, c.customer_id
+            FROM tickets t
+            LEFT JOIN customers c ON c.user_id = t.user_id
             WHERE 1
         `;
         if (user_id) {
-            totalCountQuery += ` AND user_id = ${user_id}`;
+            totalCountQuery += ` AND t.user_id = ${user_id}`;
+        }
+        if (customer_id) {
+            totalCountQuery += ` AND c.customer_id = ${customer_id}`;
         }
 
         const totalCountResult = await connection.query(totalCountQuery);
@@ -829,14 +835,19 @@ const getTicketStatusCount = async (req, res) => {
 
         let statusCountQuery = `
             SELECT 
-                ticket_status,
+                t.ticket_status,c.customer_id,
                 COUNT(*) AS count
-            FROM tickets WHERE 1
-           
+            FROM tickets t 
+            LEFT JOIN customers c ON c.user_id = t.user_id
+            WHERE 1
+
         `;
         
         if (user_id) {
-            statusCountQuery += ` AND user_id = ${user_id}`;
+            statusCountQuery += ` AND t.user_id = ${user_id}`;
+        }
+        if (customer_id) {
+            statusCountQuery += ` AND c.customer_id = ${customer_id}`;
         }
         statusCountQuery += ` GROUP BY ticket_status`
         const [statusCountResult] = await connection.query(statusCountQuery);
@@ -863,6 +874,8 @@ const getTicketStatusCount = async (req, res) => {
         await connection.commit();
         return res.status(200).json(data);
     } catch (error) {
+        console.log(error);
+        
         await connection.rollback();
         return error500(error, res);
     } finally {
