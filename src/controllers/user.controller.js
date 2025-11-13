@@ -456,11 +456,17 @@ const login = async (req, res) => {
         );
 
         
-        const userDataQuery = `SELECT u.*, d.department_name, r.role_name,c.customer_id FROM users u
-        LEFT JOIN departments d ON d.department_id = u.department_id
-        LEFT JOIN roles r ON r.role_id = u.role_id
-        LEFT JOIN customers c ON c.user_id = u.user_id
-        WHERE u.user_id = ? `;
+        const userDataQuery = `SELECT 
+  u.*, 
+  d.department_name, 
+  r.role_name,
+  c.customer_id
+FROM users u
+LEFT JOIN departments d ON d.department_id = u.department_id
+LEFT JOIN roles r ON r.role_id = u.role_id
+LEFT JOIN signup s ON s.user_id = u.user_id
+LEFT JOIN customers c ON c.customer_id = s.customer_id
+WHERE u.user_id = ? `;
         let userDataResult = await connection.query(userDataQuery, [check_user.user_id]);
 
         
