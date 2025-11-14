@@ -30,6 +30,8 @@ router.get('/technician-wma', userController.getTechnicianWma);
 router.get('/customer-service', userController.getCustomerServicesWma);
 //db download
 router.get('/db-download', userController.getDB);
+//technician company
+router.get('/technician-company', userController.getTechCompanyWma);
 //by id 
 router.get('/:id', userController.getUser);
 //customer by id

@@ -850,7 +850,7 @@ const getTechnicianWma = async (req, res) => {
 
 //Customer active
 const getCustomersWma = async (req, res) => {
-     const { user_id} = req.query;
+     const { user_id } = req.query;
 
     // attempt to obtain a database connection
     let connection = await getConnection();
@@ -1990,6 +1990,44 @@ const onStatusChangeCustomer = async (req, res) => {
     }
 };
 
+//tech under Company active
+const getTechCompanyWma = async (req, res) => {
+     const { user_id } = req.query;
+
+    // attempt to obtain a database connection
+    let connection = await getConnection();
+
+    try {
+
+        //start a transaction
+        await connection.beginTransaction();
+
+        let getTechCompanyQuery = `SELECT DISTINCT(ca.customer_id), c.company_name
+        FROM customer_agents ca
+        LEFT JOIN customers c ON c.customer_id = ca.customer_id
+        WHERE 1 AND ca.status = 1 `;
+        if (user_id){
+            getTechCompanyQuery += ` AND ca.user_id = ${user_id} `;
+        }
+        getTechCompanyQuery += ` ORDER BY ca.cts`;
+        const getTechCompanyResult = await connection.query(getTechCompanyQuery);
+        const techCompany = getTechCompanyResult[0];
+
+        // Commit the transaction
+        await connection.commit();
+
+        return res.status(200).json({
+            status: 200,
+            message: "Company retrieved successfully.",
+            data: techCompany,
+        });
+    } catch (error) {
+        return error500(error, res);
+    } finally {
+        if (connection) connection.release()
+    }
+}
+
 module.exports = {
   createUser,
   login,
@@ -2015,5 +2053,6 @@ module.exports = {
   getCustomers,
   getCustomer,
   onStatusChangeCustomer,
-  getCustomerServicesWma
+  getCustomerServicesWma,
+  getTechCompanyWma
 };
