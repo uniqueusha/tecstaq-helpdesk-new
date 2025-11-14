@@ -332,7 +332,6 @@ const createUser = async (req, res) => {
                 const department_id = elements.department_id ? elements.department_id : "";
                 const userId = elements.user_id ? elements.user_id: "";
           
-        
                 const insertAgentQuery = `INSERT INTO customer_agents (customer_id, department_id, user_id) VALUES (?, ?, ?)`;
                 const insertAgentValues = [ customerid, department_id, userId,];
                 const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
@@ -456,13 +455,14 @@ const login = async (req, res) => {
         );
 
         
-        const userDataQuery = `SELECT u.*, d.department_name, r.role_name, c.customer_id, s.customer_id AS sign_customer_id
+        const userDataQuery = `SELECT u.*, d.department_name, r.role_name, c.customer_id, s.customer_id AS sign_customer_id, ca.customer_id AS cust_customer_id
         FROM users u
         LEFT JOIN departments d ON d.department_id = u.department_id
         LEFT JOIN roles r ON r.role_id = u.role_id
         LEFT JOIN customers c ON c.user_id = u.user_id
         LEFT JOIN signup s ON s.user_id = u.user_id
-        WHERE u.user_id = ? `;
+        LEFT JOIN customer_agents ca ON ca.user_id = u.user_id
+        WHERE u.user_id = ?`;
         let userDataResult = await connection.query(userDataQuery, [check_user.user_id]);
 
         
