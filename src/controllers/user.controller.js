@@ -863,7 +863,7 @@ const getCustomersWma = async (req, res) => {
         LEFT JOIN signup s ON s.customer_id = c.customer_id
         WHERE 1 AND c.status = 1 `;
         if (user_id){
-            customerQuery += ` AND s.user_id = ${user_id} OR c.user_id = ${user_id}`;
+            customerQuery += ` AND (s.user_id = ${user_id} OR c.user_id = ${user_id})`;
         }
         customerQuery += ` ORDER BY c.cts`;
         const customerResult = await connection.query(customerQuery);
