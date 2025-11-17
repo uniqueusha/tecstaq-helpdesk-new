@@ -257,7 +257,6 @@ const createUser = async (req, res) => {
     return error422("Department is required.", res);
   }
 
-  
     // //check User Name already is exists or not
     // const isExistUserNameQuery = `SELECT * FROM users WHERE LOWER(TRIM(user_name))= ?`;
     // const isExistUserNameResult = await pool.query(isExistUserNameQuery, [user_name.toLowerCase()]);
@@ -339,7 +338,6 @@ const createUser = async (req, res) => {
         }
     }
 
-    
         //commit the transation
         await connection.commit();
 
