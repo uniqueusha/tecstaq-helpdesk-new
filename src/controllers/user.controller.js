@@ -271,9 +271,9 @@ const createUser = async (req, res) => {
         return error422('Email id is already exists.', res);
     }
 
-    // Check if mobile_no exists
-    const checkMobileNoQuery = "SELECT * FROM users WHERE mobile_no = ? AND status = 1";
-    const checkMobileNoResult = await pool.query(checkMobileNoQuery, [mobile_no]);
+    // Check if phone_number exists
+    const checkMobileNoQuery = "SELECT * FROM users WHERE phone_number = ? AND status = 1";
+    const checkMobileNoResult = await pool.query(checkMobileNoQuery, [phone_number]);
     if (checkMobileNoResult[0].length > 0) {
         return error422('Mobile No is already exists.', res);
     }
