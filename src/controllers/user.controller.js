@@ -270,6 +270,13 @@ const createUser = async (req, res) => {
     if (checkUserResult[0].length > 0) {
         return error422('Email id is already exists.', res);
     }
+
+    // Check if mobile_no exists
+    const checkMobileNoQuery = "SELECT * FROM users WHERE mobile_no = ? AND status = 1";
+    const checkMobileNoResult = await pool.query(checkMobileNoQuery, [mobile_no]);
+    if (checkMobileNoResult[0].length > 0) {
+        return error422('Mobile No is already exists.', res);
+    }
     
     // Attempt to obtain a database connection
     let connection = await getConnection();
@@ -323,7 +330,6 @@ const createUser = async (req, res) => {
             let insertServiceResult = await connection.query(insertServiceQuery, insertServiceValues);
         }
         
-       
         if (role_id == 3) {
         let customerAgentArray = customerAgent;
             for (let i = 0; i < customerAgentArray.length; i++) {
@@ -867,7 +873,7 @@ const getCustomersWma = async (req, res) => {
         LEFT JOIN signup s ON s.customer_id = c.customer_id
         WHERE 1 AND c.status = 1 `;
         if (user_id){
-            customerQuery += ` AND (s.user_id = '${user_id}' )`;
+            customerQuery += ` AND (s.user_id = '${user_id}')`;
         }
         customerQuery += ` ORDER BY c.cts`;
         const customerResult = await connection.query(customerQuery);
@@ -887,8 +893,6 @@ const getCustomersWma = async (req, res) => {
         if (connection) connection.release()
     }
 }
-
-
 
 //change password
 const onChangePassword = async (req, res) => {
@@ -1806,8 +1810,8 @@ const getCustomers = async (req, res) => {
                 getCustomerQuery += ` AND status = 0`;
                 countQuery += ` AND status = 0`;
             } else {
-                getCustomerQuery += ` AND (LOWER(c.user_name) LIKE '%${lowercaseKey}%' || LOWER(c.comapny_name) LIKE '%${lowercaseKey}%')`;
-                countQuery += ` AND (LOWER(c.user_name) LIKE '%${lowercaseKey}%' || LOWER(c.company_name) LIKE '%${lowercaseKey}%')`;
+                getCustomerQuery += ` AND (LOWER(c.customer_name) LIKE '%${lowercaseKey}%' || LOWER(c.comapny_name) LIKE '%${lowercaseKey}%' || LOWER(c.email_id) LIKE '%${lowercaseKey}%')`;
+                countQuery += ` AND (LOWER(c.customer_name) LIKE '%${lowercaseKey}%' || LOWER(c.company_name) LIKE '%${lowercaseKey}%' || LOWER(c.email_id) LIKE '%${lowercaseKey}%')`;
             }
         }
         getCustomerQuery += " ORDER BY c.cts DESC";
