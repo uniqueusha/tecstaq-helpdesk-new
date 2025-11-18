@@ -1810,7 +1810,7 @@ const getCustomers = async (req, res) => {
                 getCustomerQuery += ` AND status = 0`;
                 countQuery += ` AND status = 0`;
             } else {
-                getCustomerQuery += ` AND (LOWER(c.customer_name) LIKE '%${lowercaseKey}%' || LOWER(c.comapny_name) LIKE '%${lowercaseKey}%' || LOWER(c.email_id) LIKE '%${lowercaseKey}%')`;
+                getCustomerQuery += ` AND (LOWER(c.customer_name) LIKE '%${lowercaseKey}%' || LOWER(c.company_name) LIKE '%${lowercaseKey}%' || LOWER(c.email_id) LIKE '%${lowercaseKey}%')`;
                 countQuery += ` AND (LOWER(c.customer_name) LIKE '%${lowercaseKey}%' || LOWER(c.company_name) LIKE '%${lowercaseKey}%' || LOWER(c.email_id) LIKE '%${lowercaseKey}%')`;
             }
         }
