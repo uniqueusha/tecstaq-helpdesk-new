@@ -334,11 +334,11 @@ const createUser = async (req, res) => {
         let customerAgentArray = customerAgent;
             for (let i = 0; i < customerAgentArray.length; i++) {
                 const elements = customerAgentArray[i];
-                const department_id = elements.department_id ? elements.department_id : "";
+                const role_id = elements.role_id ? elements.role_id : "";
                 const userId = elements.user_id ? elements.user_id: "";
           
-                const insertAgentQuery = `INSERT INTO customer_agents (customer_id, department_id, user_id) VALUES (?, ?, ?)`;
-                const insertAgentValues = [ customerid, department_id, userId,];
+                const insertAgentQuery = `INSERT INTO customer_agents (customer_id, role_id, user_id) VALUES (?, ?, ?)`;
+                const insertAgentValues = [ customerid, role_id, userId,];
                 const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
             }
         }
