@@ -805,7 +805,7 @@ const getUserWma = async (req, res) => {
 
 //get Technician active...
 const getTechnicianWma = async (req, res) => {
-     const { department_id} = req.query;
+     const { department_id, user_id} = req.query;
 
     // attempt to obtain a database connection
     let connection = await getConnection();
@@ -825,6 +825,10 @@ const getTechnicianWma = async (req, res) => {
 
         if (department_id) {
         userQuery += ` AND u.department_id = '${department_id}'`;
+        }
+
+        if (user_id) {
+        userQuery += ` AND u.user_id = '${user_id}'`;
         }
 
         userQuery += ` ORDER BY u.user_name`;
