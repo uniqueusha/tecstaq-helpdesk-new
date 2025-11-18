@@ -870,8 +870,10 @@ const getCustomersWma = async (req, res) => {
 
         let customerQuery = `SELECT c.*
         FROM customers c
-        LEFT JOIN signup s ON s.customer_id = c.customer_id
+    
+    
         WHERE 1 AND c.status = 1 `;
+        // LEFT JOIN signup s ON s.customer_id = c.customer_id
         if (user_id){
             customerQuery += ` AND (s.user_id = '${user_id}')`;
         }
