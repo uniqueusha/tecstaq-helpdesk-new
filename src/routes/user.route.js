@@ -26,6 +26,8 @@ router.get('/download', userController.getUserDownload);
 router.get('/customer-wma', userController.getCustomersWma);
 //active technician
 router.get('/technician-wma', userController.getTechnicianWma);
+//Signup active
+router.get('/signup-wma', userController.getSignupWma);
 //customer under services
 router.get('/customer-service', userController.getCustomerServicesWma);
 //db download

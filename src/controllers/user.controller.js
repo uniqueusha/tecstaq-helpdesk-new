@@ -809,6 +809,47 @@ const getUserWma = async (req, res) => {
     }
 }
 
+//get signup active...
+const getSignupWma = async (req, res) => {
+     const { customer_id} = req.query;
+
+    // attempt to obtain a database connection
+    let connection = await getConnection();
+
+    try {
+
+        //start a transaction
+        await connection.beginTransaction();
+
+        let userQuery = `SELECT s.*, c.customer_name 
+        FROM signup s 
+        LEFT JOIN customers c
+        ON c.customer_id = s.customer_id
+        WHERE 1 AND s.status = 1`;
+
+        if (customer_id) {
+        userQuery += ` AND s.customer_id = '${customer_id}'`;
+        }
+
+        userQuery += ` ORDER BY s.user_name`;
+        const userResult = await connection.query(userQuery);
+        const user = userResult[0];
+
+        // Commit the transaction
+        await connection.commit();
+
+        return res.status(200).json({
+            status: 200,
+            message: "Signup Employee retrieved successfully.",
+            data: user,
+        });
+    } catch (error) {
+        return error500(error, res);
+    } finally {
+        if (connection) connection.release()
+    }
+}
+
 //get Technician active...
 const getTechnicianWma = async (req, res) => {
      const { department_id, user_id} = req.query;
@@ -874,9 +915,9 @@ const getCustomersWma = async (req, res) => {
     
         WHERE 1 AND c.status = 1 `;
         // LEFT JOIN signup s ON s.customer_id = c.customer_id
-        if (user_id){
-            customerQuery += ` AND (s.user_id = '${user_id}')`;
-        }
+        // if (user_id){
+        //     customerQuery += ` AND (s.user_id = '${user_id}')`;
+        // }
         customerQuery += ` ORDER BY c.cts`;
         const customerResult = await connection.query(customerQuery);
         const customer = customerResult[0];
@@ -2064,5 +2105,6 @@ module.exports = {
   getCustomer,
   onStatusChangeCustomer,
   getCustomerServicesWma,
-  getTechCompanyWma
+  getTechCompanyWma,
+  getSignupWma
 };
