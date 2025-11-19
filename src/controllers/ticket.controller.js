@@ -643,7 +643,7 @@ const getAllTickets = async (req, res) => {
         LEFT JOIN users u3 ON u3.user_id = att.uploaded_by 
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id
-        WHERE 1 `;
+        WHERE 1 AND ta.assigned_to = 'null'`;
 
         let countQuery = `SELECT COUNT(*) AS total FROM tickets t
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
@@ -755,6 +755,7 @@ const getAllTickets = async (req, res) => {
 //Ticket list by id
 const getTicket = async (req, res) => {
     const ticketId = parseInt(req.params.id);
+
     
     // attempt to obtain a database connection
     let connection = await getConnection();
