@@ -242,6 +242,7 @@ const createTicket = async (req, res)=>{
     const department_id = req.body.department_id ? req.body.department_id :'';
     const subject = req.body.subject ? req.body.subject.trim() :'';
     const customer_id = req.body.customer_id ? req.body.customer_id :'';
+    const service_id = req.body.service_id ? req.body.service_id :'';
     const description = req.body.description ? req.body.description.trim() :'';
     const ticket_status = req.body.ticket_status ? req.body.ticket_status.trim() : null;
     const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
