@@ -285,8 +285,8 @@ const createTicket = async (req, res)=>{
         const closedAtResult = await pool.query(closedAtQuery);
         const closed_at = closedAtResult[0].cts;
 
-        const insertTicketQuery = "INSERT INTO tickets (ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, description, ticket_status, closed_at)VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        const insertTicketResult = await connection.query(insertTicketQuery,[ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, description, ticket_status, closed_at]);
+        const insertTicketQuery = "INSERT INTO tickets (ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, service_id, description, ticket_status, closed_at)VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        const insertTicketResult = await connection.query(insertTicketQuery,[ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, service_id, description, ticket_status, closed_at]);
         const ticket_id = insertTicketResult[0].insertId
 
       const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
@@ -817,7 +817,7 @@ const getTicketStatusCount = async (req, res) => {
 
         // Step 1: Get total count of all tickets (with filters if needed)
         let totalCountQuery = `
-            SELECT COUNT(*) AS total, c.customer_id, t.customer_id As ticket_customer_id
+            SELECT COUNT(*) AS total, c.customer_id
             FROM tickets t
             LEFT JOIN customers c ON c.user_id = t.user_id
             WHERE 1
