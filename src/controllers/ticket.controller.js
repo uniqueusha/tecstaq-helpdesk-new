@@ -817,7 +817,7 @@ const getTicketStatusCount = async (req, res) => {
 
         // Step 1: Get total count of all tickets (with filters if needed)
         let totalCountQuery = `
-            SELECT COUNT(*) AS total, c.customer_id
+            SELECT COUNT(*) AS total, c.customer_id, t.customer_id As ticket_customer_id
             FROM tickets t
             LEFT JOIN customers c ON c.user_id = t.user_id
             WHERE 1
