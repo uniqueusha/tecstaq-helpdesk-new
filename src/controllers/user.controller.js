@@ -334,11 +334,11 @@ const createUser = async (req, res) => {
         let customerAgentArray = customerAgent;
             for (let i = 0; i < customerAgentArray.length; i++) {
                 const elements = customerAgentArray[i];
-                const role_id = elements.role_id ? elements.role_id : "";
+                const department_id = elements.department_id ? elements.department_id : "";
                 const userId = elements.user_id ? elements.user_id: "";
           
-                const insertAgentQuery = `INSERT INTO customer_agents (customer_id, role_id, user_id) VALUES (?, ?, ?)`;
-                const insertAgentValues = [ customerid, role_id, userId,];
+                const insertAgentQuery = `INSERT INTO customer_agents (customer_id, department_id, user_id) VALUES (?, ?, ?)`;
+                const insertAgentValues = [ customerid, department_id, userId,];
                 const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
             }
         }
@@ -852,7 +852,7 @@ const getSignupWma = async (req, res) => {
 
 //get Technician active...
 const getTechnicianWma = async (req, res) => {
-     const { department_id, user_id} = req.query;
+     const {  key, department_id, user_id} = req.query;
 
     // attempt to obtain a database connection
     let connection = await getConnection();
@@ -869,6 +869,13 @@ const getTechnicianWma = async (req, res) => {
         LEFT JOIN roles r
         ON r.role_id = u.role_id
         WHERE 1 AND u.status = 1 AND u.role_id = 2`;
+
+        if (key) {
+            const lowercaseKey = key.toLowerCase().trim();
+            userQuery += ` AND (LOWER(u.user_name) LIKE '%${lowercaseKey}%' || LOWER(u.email_id) LIKE '%${lowercaseKey}%' || LOWER(u.phone_number) LIKE '%${lowercaseKey}%')`;
+            
+        }
+
 
         if (department_id) {
         userQuery += ` AND u.department_id = '${department_id}'`;
