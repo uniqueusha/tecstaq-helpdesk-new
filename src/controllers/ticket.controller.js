@@ -870,7 +870,7 @@ const getTicketStatusCount = async (req, res) => {
         `;
         
         if (user_id) {
-            statusCountQuery += ` (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
+            statusCountQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
         }
         if (customer_id) {
             statusCountQuery += ` AND t.customer_id = ${customer_id}`;
