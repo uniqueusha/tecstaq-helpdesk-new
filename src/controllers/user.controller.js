@@ -372,7 +372,7 @@ const createUser = async (req, res) => {
         <p>Email: ${email_id}</p>
         <p>Temporary Password: ${password}</P>
         <p>You can log in using the following link:
-          <a href="https://desk.tecstaq.com/">https://desk.tecstaq.com/</a></p>
+          <a href="https://support.tecstaq.com/">https://support.tecstaq.com/</a></p>
           <p>For security reasons, please change your password after your first login.</p>
           <p>If you didn’t request this account or believe this was created in error, please contact our support team at support@tecstaq.com.</p>
           <p>Thank you,</p>
