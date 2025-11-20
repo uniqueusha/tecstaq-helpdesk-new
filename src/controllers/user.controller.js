@@ -330,7 +330,7 @@ const createUser = async (req, res) => {
             let insertServiceResult = await connection.query(insertServiceQuery, insertServiceValues);
         }
         
-        if (role_id == 3) {
+        if (customerRole.role_name === 'Customer') {
         let customerAgentArray = customerAgent;
             for (let i = 0; i < customerAgentArray.length; i++) {
                 const elements = customerAgentArray[i];
