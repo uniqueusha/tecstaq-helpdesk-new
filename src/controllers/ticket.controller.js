@@ -266,6 +266,24 @@ const createTicket = async (req, res)=>{
     try {
         // start the transaction
         await connection.beginTransaction();
+
+         //get customer id
+    const isSignCustomerIDQuery = `SELECT * FROM signup WHERE LOWER(TRIM(email_id))= ?`;
+    const isSignCustomerIDResult = await pool.query(isSignCustomerIDQuery, [email_id.toLowerCase()]);
+    const signCustomerExist = isSignCustomerIDResult[0];
+
+     //get customer id
+    const isCustomerQuery = `SELECT * FROM customers WHERE LOWER(TRIM(email_id))= ?`;
+    const isCustomerResult = await pool.query(isCustomerQuery, [email_id.toLowerCase()]);
+    const customerExist = isCustomerResult[0];
+    
+    let customer_id = "";
+    if (customerExist) {
+        customer_id = customerExist.customer_id;
+    } else if (signCustomerExist) {
+        customer_id = signCustomerExist.customer_id;
+    }
+
         const [rows] = await connection.query(`
       SELECT ticket_no 
       FROM tickets 
@@ -629,7 +647,7 @@ const getAllTickets = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        let getTicketsQuery = `SELECT t.*, s.customer_id AS sign_customer_id, c.company_name, c.customer_id, ta.assigned_to, ta.assigned_by, ta.assigned_at, ta.remarks, att.file_path, att.uploaded_by, u.user_name, tc.name, p.name AS priority_name, d.department_name,
+        let getTicketsQuery = `SELECT DISTINCT t.*, s.customer_id AS sign_customer_id, c.company_name, c.customer_id, ta.assigned_to, ta.assigned_by, ta.assigned_at, ta.remarks, att.file_path, att.uploaded_by, u.user_name, tc.name, p.name AS priority_name, d.department_name,
         u1.user_name AS assigned_to_name, u2.user_name AS assigned_by_name, u3.user_name AS uploaded_by_name
         FROM tickets t 
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
@@ -683,9 +701,14 @@ const getAllTickets = async (req, res) => {
             countQuery += ` AND (t.customer_id = ${customer_id} OR s.customer_id = ${customer_id}) `;
         }
 
+        // if (user_id) {
+        //     getTicketsQuery += ` AND (ta.assigned_to = ${user_id} OR t.user_id = ${user_id} ) OR ta.assigned_to = 'null'`;
+        //     countQuery += ` AND (ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR ta.assigned_to = 'null'`;
+        // }
+
         if (user_id) {
-            getTicketsQuery += ` AND (ta.assigned_to = ${user_id} OR t.user_id = ${user_id} ) OR ta.assigned_to = 'null'`;
-            countQuery += ` AND (ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR ta.assigned_to = 'null'`;
+            getTicketsQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
+            countQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
         }
 
         if (assigned_to) {
@@ -1235,7 +1258,7 @@ const getStatusList = async (req, res) => {
 
         // Employee count
 
-        let statusListQuery = `SELECT t.*,c.company_name,c.customer_id, u.user_name, tc.name, ta.assigned_to, u1.user_name AS assigned_user_name FROM tickets t
+        let statusListQuery = `SELECT  DISTINCT t.*,c.company_name,c.customer_id, u.user_name, tc.name, ta.assigned_to, u1.user_name AS assigned_user_name FROM tickets t
         LEFT JOIN users u ON u.user_id = t.user_id
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
         LEFT JOIN users u1 ON u1.user_id = ta.assigned_to
