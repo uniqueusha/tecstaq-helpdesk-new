@@ -1281,8 +1281,8 @@ const getStatusList = async (req, res) => {
         }
 
         if (user_id) {
-            statusListQuery += ` AND t.user_id = ${user_id}`;
-            countQuery += ` AND t.user_id = ${user_id}`;
+            statusListQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
+            countQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
         }
 
          if (customer_id) {
