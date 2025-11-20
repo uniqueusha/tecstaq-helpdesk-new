@@ -845,10 +845,11 @@ const getTicketStatusCount = async (req, res) => {
             SELECT COUNT(*) AS total, c.customer_id
             FROM tickets t
             LEFT JOIN customers c ON c.user_id = t.user_id
+            LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id 
             WHERE 1
         `;
         if (user_id) {
-            totalCountQuery += ` AND t.user_id = ${user_id}`;
+            totalCountQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
         }
         if (customer_id) {
             totalCountQuery += ` AND t.customer_id = ${customer_id}`;
@@ -863,12 +864,13 @@ const getTicketStatusCount = async (req, res) => {
                 COUNT(*) AS count
             FROM tickets t 
             LEFT JOIN customers c ON c.user_id = t.user_id
+            LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
             WHERE 1
 
         `;
         
         if (user_id) {
-            statusCountQuery += ` AND t.user_id = ${user_id}`;
+            statusCountQuery += ` (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
         }
         if (customer_id) {
             statusCountQuery += ` AND t.customer_id = ${customer_id}`;
