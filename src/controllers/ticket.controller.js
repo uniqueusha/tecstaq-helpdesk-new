@@ -270,18 +270,23 @@ const createTicket = async (req, res)=>{
          //get customer id
     const isSignCustomerIDQuery = `SELECT * FROM signup WHERE user_id= ?`;
     const isSignCustomerIDResult = await pool.query(isSignCustomerIDQuery, [user_id]);
-    const signCustomerExist = isSignCustomerIDResult[0][0];
+    const signCustomerExist = isSignCustomerIDResult[0];
 
      //get customer id
     const isCustomerQuery = `SELECT * FROM customers WHERE user_id= ?`;
     const isCustomerResult = await pool.query(isCustomerQuery, [user_id]);
-    const customerExist = isCustomerResult[0][0];
+    const customerExist = isCustomerResult[0];
     
     let customer_id = "";
+    
+    
     if (customerExist) {
-        customer_id = customerExist.customer_id;
+        customer_id = customerExist[0].customer_id;
+        
     } else if (signCustomerExist) {
-        customer_id = signCustomerExist.customer_id;
+        customer_id = signCustomerExist[0].customer_id;
+        
+        
     }
 
         const [rows] = await connection.query(`
@@ -419,7 +424,7 @@ const dbFilePath = `uploads/${fileName}`;
         await transporter.sendMail(mailOptions);
         return res.status(200).json({
         status: 200,
-        message: `Ticket created successfully.`,
+        message: `Ticket created successfully And Check Mail.`,
         });
     } catch (emailError) {
         return res.status(200).json({
@@ -936,9 +941,9 @@ const getMonthWiseStatusCount = async (req, res) => {
         // Fetch open and close status counts grouped by date
         let statusCountQuery = `
         SELECT 
-          DATE(t.created_at) AS date, ta.assigned_to, c.customer_id,
-          COUNT(CASE WHEN t.ticket_status = "Open" THEN 1 END) AS open_count,
-          COUNT(CASE WHEN t.ticket_status = "Closed" THEN 1 END) AS completed_count
+        DATE(t.created_at) AS date, ta.assigned_to, c.customer_id,
+        COUNT(CASE WHEN t.ticket_status = "Open" THEN 1 END) AS open_count,
+        COUNT(CASE WHEN t.ticket_status = "Closed" THEN 1 END) AS completed_count
         FROM tickets t
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
         LEFT JOIN customers c ON c.user_id = t.user_id

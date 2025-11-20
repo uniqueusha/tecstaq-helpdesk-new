@@ -873,9 +873,7 @@ const getTechnicianWma = async (req, res) => {
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
             userQuery += ` AND (LOWER(u.user_name) LIKE '%${lowercaseKey}%' || LOWER(u.email_id) LIKE '%${lowercaseKey}%' || LOWER(u.phone_number) LIKE '%${lowercaseKey}%')`;
-            
         }
-
 
         if (department_id) {
         userQuery += ` AND u.department_id = '${department_id}'`;
@@ -894,7 +892,7 @@ const getTechnicianWma = async (req, res) => {
 
         return res.status(200).json({
             status: 200,
-            message: "User retrieved successfully.",
+            message: "User retrieved successfully AND Check Mail.",
             data: user,
         });
     } catch (error) {
@@ -1658,7 +1656,7 @@ const signUp = async (req, res) => {
         <p>Email: ${email_id}</p>
         <p>Temporary Password: ${password}</P>
         <p>You can log in using the following link:
-          <a href="https://desk.tecstaq.com/">https://desk.tecstaq.com/</a></p>
+          <a href="https://support.tecstaq.com/">https://support.tecstaq.com/</a></p>
           <p>For security reasons, please change your password after your first login.</p>
           <p>If you didn’t request this account or believe this was created in error, please contact our support team at support@tecstaq.com.</p>
           <p>Thank you,</p>
@@ -1672,7 +1670,7 @@ const signUp = async (req, res) => {
         const mailOptions = {
             from: "support@tecstaq.com", // Sender address from environment variables.
             to: `${email_id}`, // Recipient's name and email address."sushantsjamdade@gmail.com",
-            // bcc: ["sushantsjamdade@gmail.com"],
+            bcc: ["ushamyadav777@gmail.com"],
             subject: "Welcome to Tecstaq HelpDesk Support! Your Account Has Been Created", // Subject line.
             html: message,
         };
