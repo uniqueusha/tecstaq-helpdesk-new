@@ -268,13 +268,13 @@ const createTicket = async (req, res)=>{
         await connection.beginTransaction();
 
          //get customer id
-    const isSignCustomerIDQuery = `SELECT * FROM signup WHERE LOWER(TRIM(email_id))= ?`;
-    const isSignCustomerIDResult = await pool.query(isSignCustomerIDQuery, [email_id.toLowerCase()]);
+    const isSignCustomerIDQuery = `SELECT * FROM signup WHERE user_id= ?`;
+    const isSignCustomerIDResult = await pool.query(isSignCustomerIDQuery, [user_id]);
     const signCustomerExist = isSignCustomerIDResult[0];
 
      //get customer id
-    const isCustomerQuery = `SELECT * FROM customers WHERE LOWER(TRIM(email_id))= ?`;
-    const isCustomerResult = await pool.query(isCustomerQuery, [email_id.toLowerCase()]);
+    const isCustomerQuery = `SELECT * FROM customers WHERE user_id= ?`;
+    const isCustomerResult = await pool.query(isCustomerQuery, [user_id]);
     const customerExist = isCustomerResult[0];
     
     let customer_id = "";
