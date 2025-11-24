@@ -7,6 +7,8 @@ const checkAuth = require('../middleware/check.auth');
 router.post('/', checkAuth,ticketController.createTicket);
 //list ticket
 router.get('/', ticketController.getAllTickets);
+//report
+router.get('/report', ticketController.getAllTicketReports);
 //status count
 router.get('/status-count', ticketController.getTicketStatusCount);
 //Month Wise Status Count

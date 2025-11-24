@@ -279,22 +279,18 @@ const createTicket = async (req, res)=>{
     
     let customer_id = "";
     
-    
-    if (customerExist) {
-        customer_id = customerExist[0].customer_id;
-        
+    if (customerExist.length>0) {
+        customer_id = customerExist[0].customer_id;  
     } else if (signCustomerExist) {
-        customer_id = signCustomerExist[0].customer_id;
-        
-        
+        customer_id = signCustomerExist[0].customer_id; 
     }
 
         const [rows] = await connection.query(`
-      SELECT ticket_no 
-      FROM tickets 
-      WHERE customer_id = ? 
-      ORDER BY ticket_id DESC 
-      LIMIT 1
+        SELECT ticket_no 
+        FROM tickets 
+        WHERE customer_id = ? 
+        ORDER BY ticket_id DESC 
+        LIMIT 1
     `, [customer_id]);
 
         let ticket_no = 'TCK-1'; // default first ticket number
@@ -305,7 +301,7 @@ const createTicket = async (req, res)=>{
             ticket_no = `TCK-${lastNumber + 1}`;
         }
 
-        const closedAtQuery = `SELECT * FROM ticket_status_history WHERE LOWER(TRIM(new_status)) = "close" `;
+        const closedAtQuery = `SELECT * FROM ticket_status_history WHERE LOWER(TRIM(new_status)) = "Closed" `;
         const closedAtResult = await pool.query(closedAtQuery);
         const closed_at = closedAtResult[0].cts;
 
@@ -351,7 +347,6 @@ const dbFilePath = `uploads/${fileName}`;
             const technician_name = userResult[i].user_name;
             const technician_email_id = userResult[i].email_id;
             
-
         const userDataQuery = `SELECT user_name, email_id FROM users WHERE user_id = ?`;
         const [userDataResult] = await connection.query(userDataQuery,[user_id]);
         
@@ -452,7 +447,7 @@ const updateTicket = async (req, res) => {
 
     const description = req.body.description ? req.body.description.trim() :'';
     const ticket_status = req.body.ticket_status ? req.body.ticket_status.trim() : '';
-    const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
+    // const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
     const ticket_conversation_id = req.body.ticket_conversation_id ? req.body.ticket_conversation_id : null;
     const base64PDF = req.body.file_path ? req.body.file_path.trim() :'';
     const assigned_to = req.body.assigned_to ? req.body.assigned_to : '';
@@ -481,14 +476,27 @@ const updateTicket = async (req, res) => {
         if (ticketResult[0].length == 0) {
             return error422("Ticket Not Found.", res);
         }
+
+        // if (ticket_status == 'Closed') {
+        // const closedAtQuery = `SELECT * FROM ticket_status_history WHERE LOWER(TRIM(new_status)) = "Closed" AND ticket_id  = ?`;
+        // const closedAtResult = await pool.query(closedAtQuery, [ticketId]);
+        // console.log(closedAtResult);
+        // }
+        
+        // const closed_at = closedAtResult[0][0].cts;
+        // console.log(closed_at);
         
         // Update the ticket record with new data
         const updateQuery = `
             UPDATE tickets
-            SET  ticket_category_id = ?, priority_id = ?, department_id = ?, subject = ?, customer_id = ?,description = ?, ticket_status = ?, closed_at = ?
+            SET  ticket_category_id = ?, priority_id = ?, department_id = ?, subject = ?, description = ?, ticket_status = ?, 
+                        closed_at = CASE 
+                        WHEN ? = 'Closed' THEN NOW() 
+                        ELSE NULL 
+                    END
             WHERE ticket_id = ?
         `;
-        await connection.query(updateQuery, [  ticket_category_id, priority_id, department_id, subject, customer_id, description, ticket_status, closed_at, ticketId]);
+        await connection.query(updateQuery, [  ticket_category_id, priority_id, department_id, subject,  description, ticket_status, ticket_status, ticketId]);
 
         const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
         const pdfBuffer = Buffer.from(cleanedBase64, "base64");
@@ -532,7 +540,6 @@ for (let i = 0; i < userResult.length; i++) {
             const element = userResult[i];
             const technician_name = userResult[i].user_name;
             const technician_email_id = userResult[i].email_id;
-            
 
         const userDataQuery = `SELECT user_name, email_id FROM users WHERE user_id = ?`;
         const [userDataResult] = await connection.query(userDataQuery,[user_id]);
@@ -544,8 +551,6 @@ for (let i = 0; i < userResult.length; i++) {
         LEFT JOIN users u ON u.user_id = tc.assigned_to
         WHERE tc.assigned_to = ?`;
         const [assginedResult] = await connection.query(assginedQuery,[assigned_to]);
-        
-        
         
         const userAssignedDataQuery = `SELECT user_name, email_id FROM users WHERE user_id = ?`;
         const [userAssignedDataResult] = await connection.query(userAssignedDataQuery,[assigned_to]);
@@ -622,7 +627,6 @@ for (let i = 0; i < userResult.length; i++) {
         message: `Ticket Update successfully.`,
         });
     } catch (emailError) {
-        console.error("Email sending failed:", emailError);
         return res.status(200).json({
         status: 200,
         message: "Ticket created successfully, but failed to send email.",
@@ -905,8 +909,7 @@ const getTicketStatusCount = async (req, res) => {
         await connection.commit();
         return res.status(200).json(data);
     } catch (error) {
-        console.log(error);
-        
+    
         await connection.rollback();
         return error500(error, res);
     } finally {
@@ -1334,6 +1337,163 @@ const getStatusList = async (req, res) => {
     }
 };
 
+
+//all tickets Report list
+const getAllTicketReports = async (req, res) => {
+    const { page, perPage, key, user_id, department_id, ticket_category_id, assigned_to, fromDate, toDate, ticket_status, priority_id, customer_id } = req.query;
+
+    // attempt to obtain a database connection
+    let connection = await getConnection();
+
+    try {
+
+        //start a transaction
+        await connection.beginTransaction();
+
+        let getTicketsQuery = `SELECT DISTINCT t.*, s.customer_id AS sign_customer_id, c.company_name, c.customer_id, ta.assigned_to, ta.assigned_by, ta.assigned_at, ta.remarks, att.file_path, att.uploaded_by, u.user_name, tc.name, p.name AS priority_name, d.department_name,
+        u1.user_name AS assigned_to_name, u2.user_name AS assigned_by_name, u3.user_name AS uploaded_by_name
+        FROM tickets t 
+        LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
+        LEFT JOIN ticket_attachments att ON att.ticket_id = t.ticket_id
+        LEFT JOIN users u ON u.user_id = t.user_id
+        LEFT JOIN ticket_categories tc ON tc.ticket_category_id = t.ticket_category_id
+        LEFT JOIN priorities p ON p.priority_id = t.priority_id
+        LEFT JOIN departments d ON d.department_id = t.department_id
+        LEFT JOIN users u1 ON u1.user_id = ta.assigned_to
+        LEFT JOIN users u2 ON u2.user_id = ta.assigned_by
+        LEFT JOIN users u3 ON u3.user_id = att.uploaded_by 
+        LEFT JOIN customers c ON c.customer_id = t.customer_id
+        LEFT JOIN signup s ON s.user_id = u.user_id
+        WHERE 1 `;
+
+        let countQuery = `SELECT COUNT(*) AS total FROM tickets t
+        LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
+        LEFT JOIN ticket_attachments att ON att.ticket_id = t.ticket_id
+        LEFT JOIN users u ON u.user_id = t.user_id
+        LEFT JOIN ticket_categories tc ON tc.ticket_category_id = t.ticket_category_id
+        LEFT JOIN priorities p ON p.priority_id = t.priority_id
+        LEFT JOIN departments d ON d.department_id = t.department_id
+        LEFT JOIN users u1 ON u1.user_id = ta.assigned_to
+        LEFT JOIN users u2 ON u2.user_id = ta.assigned_by
+        LEFT JOIN users u3 ON u3.user_id = att.uploaded_by 
+        LEFT JOIN customers c ON c.customer_id = t.customer_id
+        LEFT JOIN signup s ON s.user_id = u.user_id
+        WHERE 1`;
+
+        if (key) {
+            const lowercaseKey = key.toLowerCase().trim();
+            if (lowercaseKey === "activated") {
+                getTicketsQuery += ` AND status = 1`;
+                countQuery += ` AND status = 1`;
+            } else if (lowercaseKey === "deactivated") {
+                getTicketsQuery += ` AND status = 0`;
+                countQuery += ` AND status = 0`;
+            } else {
+                getTicketsQuery += ` AND (LOWER(u1.user_name) LIKE '%${lowercaseKey}%' OR LOWER(t.subject) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%' OR LOWER(c.customer_name) LIKE '%${lowercaseKey}%')`;
+                countQuery += ` AND (LOWER(u1.user_name) LIKE '%${lowercaseKey}%' OR LOWER(t.subject) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%' OR LOWER(c.customer_name) LIKE '%${lowercaseKey}%')`;
+            }
+        }
+
+        if (fromDate && toDate) {
+            getTicketsQuery += ` AND DATE(t.created_at) BETWEEN '${fromDate}' AND '${toDate}'`;
+            countQuery += ` AND DATE(t.created_at) BETWEEN '${fromDate}' AND '${toDate}'`;
+        }
+
+        if (customer_id) {
+            getTicketsQuery += ` AND (t.customer_id = ${customer_id} OR s.customer_id = ${customer_id})`;
+            countQuery += ` AND (t.customer_id = ${customer_id} OR s.customer_id = ${customer_id}) `;
+        }
+
+        // if (user_id) {
+        //     getTicketsQuery += ` AND (ta.assigned_to = ${user_id} OR t.user_id = ${user_id} ) OR ta.assigned_to = 'null'`;
+        //     countQuery += ` AND (ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR ta.assigned_to = 'null'`;
+        // }
+
+        if (user_id) {
+            getTicketsQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
+            countQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
+        }
+
+        if (assigned_to) {
+            getTicketsQuery += ` AND ta.assigned_to = ${assigned_to}`;
+            countQuery += ` AND ta.assigned_to = ${assigned_to}`;
+        }
+
+        if (priority_id) {
+            getTicketsQuery += ` AND t.priority_id = ${priority_id}`;
+            countQuery += ` AND t.priority_id = ${priority_id}`;
+        }
+
+        if (department_id) {
+            getTicketsQuery += ` AND t.department_id = ${department_id}`;
+            countQuery += ` AND t.department_id = ${department_id}`;
+        }
+
+        if (ticket_category_id) {
+            getTicketsQuery += ` AND t.ticket_category_id = ${ticket_category_id} `;
+            countQuery += ` AND t.ticket_category_id = ${ticket_category_id} `;
+        }
+
+        if (ticket_status) {
+            getTicketsQuery += ` AND LOWER(t.ticket_status) = LOWER('${ticket_status}')`;
+            countQuery += ` AND LOWER(t.ticket_status) = LOWER('${ticket_status}')`;
+        } 
+        getTicketsQuery += " ORDER BY t.created_at DESC";
+
+        // Apply pagination if both page and perPage are provided
+        let total = 0;
+        if (page && perPage) {
+            const totalResult = await connection.query(countQuery);
+            total = parseInt(totalResult[0][0].total);
+
+            const start = (page - 1) * perPage;
+            getTicketsQuery += ` LIMIT ${perPage} OFFSET ${start}`;
+        }
+
+        const result = await connection.query(getTicketsQuery);
+        const tickets = result[0];
+
+        // Fetch ticket status
+        for (let i = 0; i < tickets.length; i++) {
+            const element = tickets[i];
+            let tecketStatusQuery = `SELECT ts.*
+                FROM ticket_status_history ts
+                WHERE ts.ticket_id = ${element.ticket_id} `;
+
+            if (ticket_status) {
+                tecketStatusQuery += ` AND ts.new_status = '${ticket_status}'`;
+            }
+
+            tecketStatusQuery += ` ORDER BY ts.cts DESC`;
+
+            const tecketStatusResult = await connection.query(tecketStatusQuery);
+            tickets[i]['ticketStatus'] = tecketStatusResult[0];
+        }
+
+        // Commit the transaction
+        await connection.commit();
+        const data = {
+            status: 200,
+            message: "Tickets retrieved successfully",
+            data: tickets,
+        };
+        // Add pagination information if provided
+        if (page && perPage) {
+            data.pagination = {
+                per_page: perPage,
+                total: total,
+                current_page: page,
+                last_page: Math.ceil(total / perPage),
+            };
+        }
+
+        return res.status(200).json(data);
+    } catch (error) {
+        return error500(error, res);
+    } finally {
+        if (connection) connection.release()
+    }
+} 
 module.exports = {
   createTicket,
   updateTicket,
@@ -1344,5 +1504,6 @@ module.exports = {
   getTodayOpenTicketList,
   getDocumentDownload,
   getTicketDownload,
-  getStatusList
+  getStatusList,
+  getAllTicketReports
 };

@@ -243,7 +243,7 @@ const createUser = async (req, res) => {
   const isSite = req.body.isSite ? req.body.isSite : '';
   const serviceData = req.body.serviceData ? req.body.serviceData : [];
   const customerAgent = req.body.customerAgent ? req.body.customerAgent :[];
-//   const password = "123456";
+const password = "123456";
 
   if (!user_name) {
     return error422("User name is required.", res);
@@ -289,12 +289,12 @@ const createUser = async (req, res) => {
         const insertuserResult = await connection.query(insertUserQuery, insertUserValues);
         const user_id = insertuserResult[0].insertId;
 
-        let length = 8,
-        charset ="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-        password = "";
-        for (let i = 0, n = charset.length; i < length; ++i) {
-            password += charset.charAt(Math.floor(Math.random() * n));
-        }
+        // let length = 8,
+        // charset ="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+        // password = "";
+        // for (let i = 0, n = charset.length; i < length; ++i) {
+        //     password += charset.charAt(Math.floor(Math.random() * n));
+        // }
         const hash = await bcrypt.hash(password, 10); // Hash the password using bcrypt
 
         //insert into Untitled
@@ -1496,7 +1496,7 @@ const getDBlocal = async (req, res) => {
     await connection.commit();
     res.send(`✅ Database imported successfully and backup created at: ${backupFilePath}`);
   } catch (error) {
-    console.error('❌ Database import/backup failed:', error);
+    // console.error('❌ Database import/backup failed:', error);
     if (connection) await connection.rollback();
     res.status(500).send(error.message);
   } finally {
@@ -1560,7 +1560,7 @@ const getDB = async (req, res) => {
     await connection.commit();
     res.send(`? Database imported successfully and backup created at: ${backupFilePath}`);
   } catch (error) {
-    console.error('? Database import/backup failed:', error);
+    // console.error('? Database import/backup failed:', error);
     if (connection) await connection.rollback();
     res.status(500).send(error.message);
   } finally {
