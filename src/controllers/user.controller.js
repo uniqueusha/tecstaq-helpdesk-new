@@ -1882,7 +1882,7 @@ const getCustomers = async (req, res) => {
         const data = {
             status: 200,
             message: "Customer retrieved successfully",
-            data: customer,
+            data: customer
         };
 
         // Add pagination information if provided
@@ -2084,6 +2084,81 @@ const getTechCompanyWma = async (req, res) => {
     }
 }
 
+
+//Customer download
+const getCustomerDownload = async (req, res) => {
+
+    const { key } = req.query;
+
+    let connection = await getConnection();
+    try {
+        await connection.beginTransaction();
+
+        let getCustomerQuery = `SELECT c.*
+        FROM customers c
+        WHERE 1 AND c.status = 1`;
+
+        if (key) {
+            const lowercaseKey = key.toLowerCase().trim();
+            getCustomerQuery += ` AND (LOWER(customer_name) LIKE '%${lowercaseKey}%')`;
+        }
+
+        getCustomerQuery += " ORDER BY c.cts DESC";
+
+        let result = await connection.query(getCustomerQuery);
+        let customer = result[0];
+
+        if (customer.length === 0) {
+            return error422("No data found.", res);
+        }
+
+
+        customer = customer.map((item, index) => ({
+            "Sr No": index + 1,
+            "Create Date": item.cts,
+            "Customer Name":item.customer_name,
+            "Company Name":item.company_name,
+            "Email ID": item.email_id,
+            "Phone No.": item.phone_number,
+            "Domain": item.domain
+
+            // "Status": item.status === 1 ? "activated" : "deactivated",
+        }));
+
+        // Create a new workbook
+        const workbook = xlsx.utils.book_new();
+
+        // Create a worksheet and add only required columns
+        const worksheet = xlsx.utils.json_to_sheet(customer);
+
+        // Add the worksheet to the workbook
+        xlsx.utils.book_append_sheet(workbook, worksheet, "CustomerInfo");
+
+        // Create a unique file name
+        const excelFileName = `exported_data_${Date.now()}.xlsx`;
+
+        // Write the workbook to a file
+        xlsx.writeFile(workbook, excelFileName);
+
+        // Send the file to the client
+        res.download(excelFileName, (err) => {
+            if (err) {
+                res.status(500).send("Error downloading the file.");
+            } else {
+                fs.unlinkSync(excelFileName);
+            }
+        });
+
+        await connection.commit();
+    } catch (error) {
+        console.log(error);
+        
+        return error500(error, res);
+    } finally {
+        if (connection) connection.release();
+    }
+};
+
 module.exports = {
   createUser,
   login,
@@ -2111,5 +2186,6 @@ module.exports = {
   onStatusChangeCustomer,
   getCustomerServicesWma,
   getTechCompanyWma,
-  getSignupWma
+  getSignupWma,
+  getCustomerDownload
 };

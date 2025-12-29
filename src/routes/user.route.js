@@ -21,6 +21,8 @@ router.get('/wma', userController.getUserWma);
 router.get('/customer', userController.getCustomers);
 //download user
 router.get('/download', userController.getUserDownload);
+//customer download
+router.get('/customer-download', userController.getCustomerDownload);
 // router.get('/test-mail', userController.testMail);
 //active customer agent
 router.get('/customer-wma', userController.getCustomersWma);
