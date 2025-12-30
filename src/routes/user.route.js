@@ -7,6 +7,9 @@ const checkAuth = require('../middleware/check.auth')
 router.post('/', userController.createUser);
 //login  
 router.post('/login', userController.login);
+//logout
+router.post('/logout', userController.logUserActivity);
+
 //signup 
 router.post('/signup', userController.signUp);
 //domain check

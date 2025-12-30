@@ -56,6 +56,44 @@ error404 = (message, res) => {
   });
 };
 
+// Helper function to log activity
+const logUserActivity = async (req, res) => { 
+  const user_id = req.body.user_id ? req.body.user_id : "";
+  const session_id = req.body.session_id ? req.body.session_id : "";
+  const ip_address = req.body.ip_address ? req.body.ip_address : "";
+  const device_info = req.body.device_info ? req.body.device_info.trim() : "";
+  const status = req.body.status ? req.body.status.trim() : "";
+  
+  let connection = await getConnection();
+  try {
+    await connection.beginTransaction();
+        if (status === "login") {
+            await pool.query(
+                `INSERT INTO user_activity_log 
+                 (user_id, session_id, login_time, ip_address, device_info, status) 
+                 VALUES (?, ?, NOW(), ?, ?, 'login')`,
+                [user_id, session_id, ip_address, device_info]
+            );
+        } else if (status === "logout" || status === "timeout") {
+            await pool.query(
+                `UPDATE user_activity_log 
+                 SET logout_time = NOW(), status = ? 
+                 WHERE user_id = ? AND session_id = ? AND logout_time IS NULL`,
+                [status, user_id, session_id]
+            );
+        }
+  await connection.commit();
+    return res.status(200).json({
+      status: 200,
+      message: "Login User Activity"
+    });
+  } catch (error) {
+    await connection.rollback();
+    return error500(error, res);
+  } finally {
+    if (connection) connection.release();
+  }
+};
 //create user
 const createUserOld = async (req, res) => {
   const user_name = req.body.user_name ? req.body.user_name.trim() : "";
@@ -2187,5 +2225,6 @@ module.exports = {
   getCustomerServicesWma,
   getTechCompanyWma,
   getSignupWma,
-  getCustomerDownload
+  getCustomerDownload,
+  logUserActivity
 };
