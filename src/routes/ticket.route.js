@@ -9,6 +9,8 @@ router.post('/', checkAuth,ticketController.createTicket);
 router.get('/', ticketController.getAllTickets);
 //report
 router.get('/report', ticketController.getAllTicketReports);
+//report download
+router.get('/dowmload-report', ticketController.getTicketReportsDownload);
 //status count
 router.get('/status-count', ticketController.getTicketStatusCount);
 //Month Wise Status Count

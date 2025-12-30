@@ -1159,7 +1159,7 @@ const getTicketDownload = async (req, res) => {
     try {
         await connection.beginTransaction();
 
-        let getTicketQuery = `SELECT t.*, c.company_name, ta.assigned_to, ta.assigned_by, ta.assigned_at, ta.remarks, att.file_path, att.uploaded_by, u.user_name, tc.name, p.name AS priority_name, d.department_name,
+        let getTicketQuery = `SELECT DISTINCT t.*, s.customer_id AS sign_customer_id, c.company_name, c.customer_id, ta.assigned_to, ta.assigned_by, ta.assigned_at, ta.remarks, att.file_path, att.uploaded_by, u.user_name, tc.name, p.name AS priority_name, d.department_name,
         u1.user_name AS assigned_to_name, u2.user_name AS assigned_by_name, u3.user_name AS uploaded_by_name
         FROM tickets t 
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
@@ -1172,10 +1172,11 @@ const getTicketDownload = async (req, res) => {
         LEFT JOIN users u2 ON u2.user_id = ta.assigned_by
         LEFT JOIN users u3 ON u3.user_id = att.uploaded_by 
         LEFT JOIN customers c ON c.customer_id = t.customer_id
+        LEFT JOIN signup s ON s.user_id = u.user_id
         WHERE 1 `;
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
-            getTicketQuery += ` AND (LOWER(u1.user_name) LIKE '%${lowercaseKey}%' OR LOWER(t.subject) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%')`;
+            getTicketQuery += ` AND (LOWER(u1.user_name) LIKE '%${lowercaseKey}%' OR LOWER(t.subject) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%' OR LOWER(c.customer_name) LIKE '%${lowercaseKey}%')`;
         }
 
         if (fromDate && toDate) {
@@ -1183,7 +1184,7 @@ const getTicketDownload = async (req, res) => {
         }
 
         if (user_id) {
-            getTicketQuery += ` AND (ta.assigned_to = ${user_id} OR t.user_id = ${user_id} )`;
+            getTicketQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
         }
 
         if (assigned_to) {
@@ -1503,6 +1504,123 @@ const getAllTicketReports = async (req, res) => {
         if (connection) connection.release()
     }
 } 
+
+//download ticket
+const getTicketReportsDownload = async (req, res) => {
+
+    const { key, fromDate, toDate, user_id, customer_id, assigned_to, priority_id, department_id, ticket_category_id, ticket_status} = req.query;
+
+    let connection = await getConnection();
+    try {
+        await connection.beginTransaction();
+
+        let getTicketReportsQuery = `SELECT DISTINCT t.*, s.customer_id AS sign_customer_id, c.company_name, c.customer_id, ta.assigned_to, ta.assigned_by, ta.assigned_at, ta.remarks, att.file_path, att.uploaded_by, u.user_name, tc.name, p.name AS priority_name, d.department_name,
+        u1.user_name AS assigned_to_name, u2.user_name AS assigned_by_name, u3.user_name AS uploaded_by_name
+        FROM tickets t 
+        LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
+        LEFT JOIN ticket_attachments att ON att.ticket_id = t.ticket_id
+        LEFT JOIN users u ON u.user_id = t.user_id
+        LEFT JOIN ticket_categories tc ON tc.ticket_category_id = t.ticket_category_id
+        LEFT JOIN priorities p ON p.priority_id = t.priority_id
+        LEFT JOIN departments d ON d.department_id = t.department_id
+        LEFT JOIN users u1 ON u1.user_id = ta.assigned_to
+        LEFT JOIN users u2 ON u2.user_id = ta.assigned_by
+        LEFT JOIN users u3 ON u3.user_id = att.uploaded_by 
+        LEFT JOIN customers c ON c.customer_id = t.customer_id
+        LEFT JOIN signup s ON s.user_id = u.user_id
+        LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
+        WHERE 1 `;
+        if (key) {
+            const lowercaseKey = key.toLowerCase().trim();
+            getTicketReportsQuery += ` AND (LOWER(u1.user_name) LIKE '%${lowercaseKey}%' OR LOWER(t.subject) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%')`;
+        }
+
+        if (fromDate && toDate) {
+            getTicketReportsQuery += ` AND DATE(t.created_at) BETWEEN '${fromDate}' AND '${toDate}'`;
+        }
+
+        if (user_id) {
+            getTicketReportsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
+        }
+
+        if (assigned_to) {
+            getTicketReportsQuery += ` AND ta.assigned_to = ${assigned_to}`;
+        }
+
+        if (priority_id) {
+            getTicketReportsQuery += ` AND t.priority_id = ${priority_id}`;
+        }
+
+        if (department_id) {
+            getTicketReportsQuery += ` AND t.department_id = ${department_id}`;
+        }
+
+        if (ticket_category_id) {
+            getTicketReportsQuery += ` AND t.ticket_category_id = ${ticket_category_id} `;
+        }
+
+        if (ticket_status) {
+            getTicketReportsQuery += ` AND LOWER(t.ticket_status) = LOWER('${ticket_status}')`;
+        } 
+
+        if (customer_id) {
+            getTicketReportsQuery += ` AND t.customer_id = ${customer_id} `;
+        }
+        getTicketReportsQuery += " ORDER BY tc.cts DESC";
+
+        let result = await connection.query(getTicketReportsQuery);
+        let ticketReports = result[0];
+
+        if (ticketReports.length === 0) {
+            return error422("No data found.", res);
+        }
+
+        ticketReports = ticketReports.map((item, index) => ({
+            "Sr No": index + 1,
+            "Create Date": item.cts,
+            "Assigned To":item.assigned_to_name,
+            "Ticket No": item.ticket_no,
+            "Subject": item.subject,
+            "Category": item.name,
+            "User Name": item.user_name,
+            "Ticket Status": item.ticket_status
+
+            // "Status": item.status === 1 ? "activated" : "deactivated",
+        }));
+
+        // Create a new workbook
+        const workbook = xlsx.utils.book_new();
+
+        // Create a worksheet and add only required columns
+        const worksheet = xlsx.utils.json_to_sheet(ticketReports);
+
+        // Add the worksheet to the workbook
+        xlsx.utils.book_append_sheet(workbook, worksheet, "ticketReportsInfo");
+
+        // Create a unique file name
+        const excelFileName = `exported_data_${Date.now()}.xlsx`;
+
+        // Write the workbook to a file
+        xlsx.writeFile(workbook, excelFileName);
+
+        // Send the file to the client
+        res.download(excelFileName, (err) => {
+            if (err) {
+                res.status(500).send("Error downloading the file.");
+            } else {
+                fs.unlinkSync(excelFileName);
+            }
+        });
+
+        await connection.commit();
+    } catch (error) {
+        console.log(error);
+        
+        return error500(error, res);
+    } finally {
+        if (connection) connection.release();
+    }
+};
 module.exports = {
   createTicket,
   updateTicket,
@@ -1514,5 +1632,6 @@ module.exports = {
   getDocumentDownload,
   getTicketDownload,
   getStatusList,
-  getAllTicketReports
+  getAllTicketReports,
+  getTicketReportsDownload
 };
