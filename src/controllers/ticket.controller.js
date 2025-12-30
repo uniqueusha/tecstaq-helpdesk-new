@@ -277,13 +277,20 @@ const createTicket = async (req, res)=>{
     const isCustomerResult = await pool.query(isCustomerQuery, [user_id]);
     const customerExist = isCustomerResult[0];
     
-    let customer_id = "";
+    //get customer id
+    const isCustomerAgentQuery = `SELECT * FROM customer_agents WHERE user_id= ?`;
+    const isCustomerAgentResult = await pool.query(isCustomerAgentQuery, [user_id]);
+    const customerAgentExist = isCustomerAgentResult[0];
+
+    // let customer_id = "";
     
-    if (customerExist.length>0) {
-        customer_id = customerExist[0].customer_id;  
-    } else if (signCustomerExist) {
-        customer_id = signCustomerExist[0].customer_id; 
-    }
+    // if (customerExist.length>0) {
+    //     customer_id = customerExist[0].customer_id;  
+    // } else if (customerAgentExist) {
+    //     customer_id = customerAgentExist[0].customer_id; 
+    // } else if (signCustomerExist) {
+    //     customer_id = signCustomerExist[0].customer_id; 
+    // }
 
         const [rows] = await connection.query(`
         SELECT ticket_no 
