@@ -1371,6 +1371,7 @@ const getAllTicketReports = async (req, res) => {
         LEFT JOIN users u3 ON u3.user_id = att.uploaded_by 
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id
+        LEFT JOIN customer_agents ca ON ca.user_id = t.user_id
         WHERE 1 `;
 
         let countQuery = `SELECT COUNT(*) AS total FROM tickets t
@@ -1385,6 +1386,8 @@ const getAllTicketReports = async (req, res) => {
         LEFT JOIN users u3 ON u3.user_id = att.uploaded_by 
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id
+                LEFT JOIN customer_agents ca ON ca.user_id = t.user_id
+
         WHERE 1`;
 
         if (key) {
@@ -1417,8 +1420,8 @@ const getAllTicketReports = async (req, res) => {
         // }
 
         if (user_id) {
-            getTicketsQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
-            countQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
+            getTicketsQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR ca.user_id = ${user_id})`;
+            countQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR ca.user_id = ${user_id})`;
         }
 
         if (assigned_to) {
