@@ -1284,6 +1284,7 @@ const getStatusList = async (req, res) => {
         LEFT JOIN users u1 ON u1.user_id = ta.assigned_to
         LEFT JOIN ticket_categories tc ON tc.ticket_category_id = t.ticket_category_id
         LEFT JOIN customers c ON c.customer_id = t.customer_id
+        LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
         WHERE 1 AND t.ticket_status = '${ticket_status}'`;
 
         let countQuery = `SELECT COUNT(*) AS total FROM tickets t
@@ -1292,6 +1293,7 @@ const getStatusList = async (req, res) => {
         LEFT JOIN users u1 ON u1.user_id = ta.assigned_to
         LEFT JOIN ticket_categories tc ON tc.ticket_category_id = t.ticket_category_id
         LEFT JOIN customers c ON c.customer_id = t.customer_id
+        LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
         WHERE 1 AND t.ticket_status = '${ticket_status}'`;
 
         if (key) {
@@ -1301,8 +1303,8 @@ const getStatusList = async (req, res) => {
         }
 
         if (user_id) {
-            statusListQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
-            countQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
+            statusListQuery += ` AND AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
+            countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
         }
 
          if (customer_id) {
