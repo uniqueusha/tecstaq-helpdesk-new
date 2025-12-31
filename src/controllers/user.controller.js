@@ -493,8 +493,8 @@ const login = async (req, res) => {
                 email_id: check_user.email_id,
                 session_id
             },
-            process.env.JWT_SECRET,
-            // "secret_this_should_be", // Use environment variable for secret key
+            // process.env.JWT_SECRET,
+             "secret_this_should_be", // Use environment variable for secret key
             { expiresIn: "1h" }
         );
             // Log login activity
