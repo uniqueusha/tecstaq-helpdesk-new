@@ -509,9 +509,6 @@ const login = async (req, res) => {
                 status: "login" 
             });
             
-        
-        
-        
         // Commit the transaction
         await connection.commit();
         return res.status(200).json({
@@ -519,7 +516,7 @@ const login = async (req, res) => {
             message: "Authentication successfully",
             token: token,
             expiresIn: 36000, // 1 hour in seconds,
-            data: userDataResult[0][0],
+            data: userDataResult[0][0],session_id
         });
 
     } catch (error) {
@@ -2216,6 +2213,95 @@ const logout = async (req, res) => {
     }
 };
 
+
+// get log list...
+const getLog = async (req, res) => {
+    const { page, perPage, key, user_id, customer_id } = req.query;
+
+    // attempt to obtain a database connection
+    let connection = await getConnection();
+
+    try {
+
+        //start a transaction
+        await connection.beginTransaction();
+
+        let getLogQuery = `SELECT ual.*, u.user_name 
+        FROM user_activity_log ual 
+        LEFT JOIN users u ON u.user_id = ual.user_id
+        WHERE 1 `;
+
+        let countQuery = `SELECT COUNT(*) AS total FROM user_activity_log ual 
+        LEFT JOIN users u ON u.user_id = ual.user_id
+        WHERE 1 `;
+
+        if (key) {
+            const lowercaseKey = key.toLowerCase().trim();
+            if (lowercaseKey === "activated") {
+                getLogQuery += ` AND status = 1`;
+                countQuery += ` AND status = 1`;
+            } else if (lowercaseKey === "deactivated") {
+                getLogQuery += ` AND status = 0`;
+                countQuery += ` AND status = 0`;
+            } else {
+                getLogQuery += ` AND (LOWER(u.user_name) LIKE '%${lowercaseKey}%' || LOWER(r.role_name) LIKE '%${lowercaseKey}%')`;
+                countQuery += ` AND (LOWER(u.user_name) LIKE '%${lowercaseKey}%' || LOWER(r.role_name) LIKE '%${lowercaseKey}%')`;
+            }
+        }
+
+        if (user_id) {
+            getUserQuery += ` AND u.user_id = ${user_id} `;
+            countQuery += ` AND u.user_id = ${user_id}  `;
+        }
+        if (customer_id) {
+            getLogQuery += ` AND s.customer_id = ${customer_id} `;
+            countQuery += ` AND s.customer_id = ${customer_id}  `;
+        }
+
+        if (user_id) {
+            getUserQuery += ` AND u.user_id = ${user_id} `;
+            countQuery += ` AND u.user_id = ${user_id}  `;
+        }
+        getUserQuery += " ORDER BY u.created_at DESC";
+
+        // Apply pagination if both page and perPage are provided
+        let total = 0;
+        if (page && perPage) {
+            const totalResult = await connection.query(countQuery);
+            total = parseInt(totalResult[0][0].total);
+
+            const start = (page - 1) * perPage;
+            getUserQuery += ` LIMIT ${perPage} OFFSET ${start}`;
+        }
+
+        const result = await connection.query(getUserQuery);
+        const user = result[0];
+
+        // Commit the transaction
+        await connection.commit();
+        const data = {
+            status: 200,
+            message: "User retrieved successfully",
+            data: user,
+        };
+
+        // Add pagination information if provided
+        if (page && perPage) {
+            data.pagination = {
+                per_page: perPage,
+                total: total,
+                current_page: page,
+                last_page: Math.ceil(total / perPage),
+            };
+        }
+
+        return res.status(200).json(data);
+    } catch (error) {
+        return error500(error, res);
+    } finally {
+        if (connection) connection.release()
+    }
+}
 module.exports = {
   createUser,
   login,
