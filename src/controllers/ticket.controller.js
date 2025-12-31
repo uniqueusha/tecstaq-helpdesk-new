@@ -886,7 +886,6 @@ const getTicketStatusCount = async (req, res) => {
             LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
             LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
             WHERE 1
-
         `;
         
         if (user_id) {

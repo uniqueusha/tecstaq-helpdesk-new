@@ -20,6 +20,8 @@ router.post('/match', userController.sendOtpSignUp);
 router.get('/', userController.getUsers);
 //active list
 router.get('/wma', userController.getUserWma);
+//log
+router.get('/log-report', userController.getLog);
 //customer list
 router.get('/customer', userController.getCustomers);
 //download user

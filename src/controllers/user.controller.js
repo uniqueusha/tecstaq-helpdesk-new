@@ -67,7 +67,7 @@ async function logUserActivity({ user_id, session_id, ip_address, device_info, s
                  VALUES (?, ?, NOW(), ?, ?, 'login')`,
                 [user_id, session_id, ip_address, device_info]
             );
-        } else if (status === "logout" || status === "timeout") {
+        } else if (status === "logout" || status === "timeout" || status === "session_expired") {
             await pool.query(
                 `UPDATE user_activity_log 
                  SET logout_time = NOW(), status = ? 
@@ -2226,12 +2226,14 @@ const getLog = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        let getLogQuery = `SELECT ual.*, u.user_name 
+        let getLogQuery = `SELECT ual.*, u.user_name, c.company_name 
         FROM user_activity_log ual 
+        LEFT JOIN customers c ON c.user_id = ual.user_id
         LEFT JOIN users u ON u.user_id = ual.user_id
         WHERE 1 `;
 
         let countQuery = `SELECT COUNT(*) AS total FROM user_activity_log ual 
+        LEFT JOIN customers c ON c.user_id = ual.user_id
         LEFT JOIN users u ON u.user_id = ual.user_id
         WHERE 1 `;
 
@@ -2244,25 +2246,25 @@ const getLog = async (req, res) => {
                 getLogQuery += ` AND status = 0`;
                 countQuery += ` AND status = 0`;
             } else {
-                getLogQuery += ` AND (LOWER(u.user_name) LIKE '%${lowercaseKey}%' || LOWER(r.role_name) LIKE '%${lowercaseKey}%')`;
-                countQuery += ` AND (LOWER(u.user_name) LIKE '%${lowercaseKey}%' || LOWER(r.role_name) LIKE '%${lowercaseKey}%')`;
+                getLogQuery += ` AND (LOWER(u.user_name) LIKE '%${lowercaseKey}%' || LOWER(ual.session_id) LIKE '%${lowercaseKey}%')`;
+                countQuery += ` AND (LOWER(u.user_name) LIKE '%${lowercaseKey}%' || LOWER(ual.session_id) LIKE '%${lowercaseKey}%')`;
             }
         }
 
         if (user_id) {
-            getUserQuery += ` AND u.user_id = ${user_id} `;
+            getLogQuery += ` AND u.user_id = ${user_id} `;
             countQuery += ` AND u.user_id = ${user_id}  `;
         }
         if (customer_id) {
-            getLogQuery += ` AND s.customer_id = ${customer_id} `;
-            countQuery += ` AND s.customer_id = ${customer_id}  `;
+            getLogQuery += ` AND c.customer_id = ${customer_id} `;
+            countQuery += ` AND c.customer_id = ${customer_id}  `;
         }
 
-        if (user_id) {
-            getUserQuery += ` AND u.user_id = ${user_id} `;
-            countQuery += ` AND u.user_id = ${user_id}  `;
-        }
-        getUserQuery += " ORDER BY u.created_at DESC";
+        // if (user_id) {
+        //     getUserQuery += ` AND u.user_id = ${user_id} `;
+        //     countQuery += ` AND u.user_id = ${user_id}  `;
+        // }
+        getLogQuery += " ORDER BY ual.created_at DESC";
 
         // Apply pagination if both page and perPage are provided
         let total = 0;
@@ -2271,18 +2273,18 @@ const getLog = async (req, res) => {
             total = parseInt(totalResult[0][0].total);
 
             const start = (page - 1) * perPage;
-            getUserQuery += ` LIMIT ${perPage} OFFSET ${start}`;
+            getLogQuery += ` LIMIT ${perPage} OFFSET ${start}`;
         }
 
-        const result = await connection.query(getUserQuery);
-        const user = result[0];
+        const result = await connection.query(getLogQuery);
+        const log = result[0];
 
         // Commit the transaction
         await connection.commit();
         const data = {
             status: 200,
-            message: "User retrieved successfully",
-            data: user,
+            message: "Log retrieved successfully",
+            data: log,
         };
 
         // Add pagination information if provided
@@ -2331,5 +2333,6 @@ module.exports = {
   getTechCompanyWma,
   getSignupWma,
   getCustomerDownload,
-  logout
+  logout,
+  getLog
 };
