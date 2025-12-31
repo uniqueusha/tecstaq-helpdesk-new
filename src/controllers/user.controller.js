@@ -74,7 +74,7 @@ const logUserActivity = async (req, res) => {
                  VALUES (?, ?, NOW(), ?, ?, 'login')`,
                 [user_id, session_id, ip_address, device_info]
             );
-        } else if (status === "logout" || status === "timeout") {
+        } else if (status === "logout" || status === "timeout" || status === "session_expired") {
             await pool.query(
                 `UPDATE user_activity_log 
                  SET logout_time = NOW(), status = ? 
@@ -486,16 +486,32 @@ const login = async (req, res) => {
         if (!isPasswordValid) {
             return error422("Password wrong.", res);
         }
+
+        const session_id = Date.now().toString() + "_" + user.user_id; // simple unique session
+
         // Generate a JWT token
         const token = jwt.sign(
             {
                 user_id: user_untitled.user_id,
                 email_id: check_user.email_id,
+                session_id
             },
+            process.env.JWT_SECRET,
             "secret_this_should_be", // Use environment variable for secret key
             { expiresIn: "1h" }
         );
-
+            // Log login activity
+            const ip_address = req.ip;
+            const device_info = req.headers['user-agent'] || "Unknown device";
+            
+            await logUserActivity({ 
+                user_id: user.user_id, 
+                session_id, 
+                ip_address, 
+                device_info, 
+                status: "login" 
+            });
+            
         
         const userDataQuery = `SELECT u.*, d.department_name, r.role_name, c.customer_id, s.customer_id AS sign_customer_id, ca.customer_id AS cust_customer_id
         FROM users u
@@ -2120,7 +2136,6 @@ const getTechCompanyWma = async (req, res) => {
     }
 }
 
-
 //Customer download
 const getCustomerDownload = async (req, res) => {
 
@@ -2195,6 +2210,22 @@ const getCustomerDownload = async (req, res) => {
     }
 };
 
+// Logout handler (optional)
+const logout = async (req, res) => {
+    try {
+        const { user_id, session_id } = req.body; // or decode from JWT
+        await logUserActivity({ user_id, session_id, status: "logout" });
+
+        return res.status(200).json({
+            status: 200,
+            message: "Logout successful"
+        });
+    } catch (err) {
+        console.error("Logout error:", err);
+        res.status(500).json({ message: "Internal server error" });
+    }
+};
+
 module.exports = {
   createUser,
   login,
@@ -2224,5 +2255,5 @@ module.exports = {
   getTechCompanyWma,
   getSignupWma,
   getCustomerDownload,
-  logUserActivity
+  logout
 };
