@@ -677,6 +677,7 @@ const getAllTickets = async (req, res) => {
         LEFT JOIN users u3 ON u3.user_id = att.uploaded_by 
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id
+        LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
         WHERE 1 `;
 
         let countQuery = `SELECT COUNT(*) AS total FROM tickets t
@@ -691,6 +692,7 @@ const getAllTickets = async (req, res) => {
         LEFT JOIN users u3 ON u3.user_id = att.uploaded_by 
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id
+        LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
         WHERE 1`;
 
         if (key) {
