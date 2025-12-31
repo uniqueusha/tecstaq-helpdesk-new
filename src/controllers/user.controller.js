@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require('path');
 const { exec } = require("child_process");
 const Importer  = require('mysql-import');
+require("dotenv").config();
 
 const transporter = nodemailer.createTransport({
     host: "smtp-mail.outlook.com",
@@ -57,16 +58,8 @@ error404 = (message, res) => {
 };
 
 // Helper function to log activity
-const logUserActivity = async (req, res) => { 
-  const user_id = req.body.user_id ? req.body.user_id : "";
-  const session_id = req.body.session_id ? req.body.session_id : "";
-  const ip_address = req.body.ip_address ? req.body.ip_address : "";
-  const device_info = req.body.device_info ? req.body.device_info.trim() : "";
-  const status = req.body.status ? req.body.status.trim() : "";
-  
-  let connection = await getConnection();
-  try {
-    await connection.beginTransaction();
+async function logUserActivity({ user_id, session_id, ip_address, device_info, status }) {
+    try {
         if (status === "login") {
             await pool.query(
                 `INSERT INTO user_activity_log 
@@ -74,7 +67,7 @@ const logUserActivity = async (req, res) => {
                  VALUES (?, ?, NOW(), ?, ?, 'login')`,
                 [user_id, session_id, ip_address, device_info]
             );
-        } else if (status === "logout" || status === "timeout" || status === "session_expired") {
+        } else if (status === "logout" || status === "timeout") {
             await pool.query(
                 `UPDATE user_activity_log 
                  SET logout_time = NOW(), status = ? 
@@ -82,18 +75,10 @@ const logUserActivity = async (req, res) => {
                 [status, user_id, session_id]
             );
         }
-  await connection.commit();
-    return res.status(200).json({
-      status: 200,
-      message: "Login User Activity"
-    });
-  } catch (error) {
-    await connection.rollback();
-    return error500(error, res);
-  } finally {
-    if (connection) connection.release();
-  }
-};
+    } catch (err) {
+        console.error("Error logging user activity:", err);
+    }
+}
 //create user
 const createUserOld = async (req, res) => {
   const user_name = req.body.user_name ? req.body.user_name.trim() : "";
@@ -487,32 +472,7 @@ const login = async (req, res) => {
             return error422("Password wrong.", res);
         }
 
-        const session_id = Date.now().toString() + "_" + user.user_id; // simple unique session
 
-        // Generate a JWT token
-        const token = jwt.sign(
-            {
-                user_id: user_untitled.user_id,
-                email_id: check_user.email_id,
-                session_id
-            },
-            process.env.JWT_SECRET,
-            "secret_this_should_be", // Use environment variable for secret key
-            { expiresIn: "1h" }
-        );
-            // Log login activity
-            const ip_address = req.ip;
-            const device_info = req.headers['user-agent'] || "Unknown device";
-            
-            await logUserActivity({ 
-                user_id: user.user_id, 
-                session_id, 
-                ip_address, 
-                device_info, 
-                status: "login" 
-            });
-            
-        
         const userDataQuery = `SELECT u.*, d.department_name, r.role_name, c.customer_id, s.customer_id AS sign_customer_id, ca.customer_id AS cust_customer_id
         FROM users u
         LEFT JOIN departments d ON d.department_id = u.department_id
@@ -523,6 +483,34 @@ const login = async (req, res) => {
         WHERE u.user_id = ?`;
         let userDataResult = await connection.query(userDataQuery, [check_user.user_id]);
 
+
+        const session_id = Date.now().toString() + "_" + check_user.user_id; // simple unique session
+
+        // Generate a JWT token
+        const token = jwt.sign(
+            {
+                user_id: user_untitled.user_id,
+                email_id: check_user.email_id,
+                session_id
+            },
+            process.env.JWT_SECRET,
+            // "secret_this_should_be", // Use environment variable for secret key
+            { expiresIn: "1h" }
+        );
+            // Log login activity
+            const ip_address = req.ip;
+            const device_info = req.headers['user-agent'] || "Unknown device";
+            
+            await logUserActivity({ 
+                user_id: check_user.user_id, 
+                session_id, 
+                ip_address, 
+                device_info, 
+                status: "login" 
+            });
+            
+        
+        
         
         // Commit the transaction
         await connection.commit();
@@ -535,6 +523,8 @@ const login = async (req, res) => {
         });
 
     } catch (error) {
+        console.log(error);
+        
         return error500(error, res)
     } finally {
         await connection.release();
