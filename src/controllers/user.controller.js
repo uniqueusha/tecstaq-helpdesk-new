@@ -262,6 +262,8 @@ const createUser = async (req, res) => {
   const company_name = req.body.company_name ? req.body.company_name.trim() : "";
   const address = req.body.address ? req.body.address.trim() : "";
   const domain = req.body.domain ? req.body.domain.trim() : "";
+    const customer_id = req.body.customer_id ? req.body.customer_id : 0;
+
   const service_id = req.body.service_id ? req.body.service_id : [];
   const isSite = req.body.isSite ? req.body.isSite : '';
   const serviceData = req.body.serviceData ? req.body.serviceData : [];
