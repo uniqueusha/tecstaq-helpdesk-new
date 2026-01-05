@@ -439,8 +439,6 @@ const password = "123456";
       });
     }
     } catch (error) {
-        console.log(error);
-        
         await connection.rollback();
         return error500(error, res);
     } finally {
@@ -534,8 +532,6 @@ const login = async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error);
-        
         return error500(error, res)
     } finally {
         await connection.release();
@@ -2207,8 +2203,7 @@ const getCustomerDownload = async (req, res) => {
 
         await connection.commit();
     } catch (error) {
-        console.log(error);
-        
+    
         return error500(error, res);
     } finally {
         if (connection) connection.release();

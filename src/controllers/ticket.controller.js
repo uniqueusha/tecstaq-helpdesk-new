@@ -346,7 +346,9 @@ const dbFilePath = `uploads/${fileName}`;
         
         await connection.commit();
 
-        const userQuery = `SELECT user_name, email_id FROM users WHERE role_id = 2 AND status = 1 customer_id = ${customer_id}`;
+        const userQuery = `SELECT u.user_name, u.email_id FROM users u
+        LEFT JOIN customer_agents ca ON ca.user_id = u.user_id
+        WHERE u.role_id = 2 AND u.status = 1 AND ca.customer_id = ${customer_id}`;
         const [userResult] = await connection.query(userQuery);
 
         for (let i = 0; i < userResult.length; i++) {
@@ -761,8 +763,6 @@ const getAllTickets = async (req, res) => {
         if (page && perPage) {
             const totalResult = await connection.query(countQuery);
             total = parseInt(totalResult[0][0].total);
-            console.log(total);
-
             const start = (page - 1) * perPage;
             getTicketsQuery += ` LIMIT ${perPage} OFFSET ${start}`;
         }
@@ -1346,8 +1346,6 @@ const getStatusList = async (req, res) => {
 
         return res.status(200).json(data);
     } catch (error) {
-        console.log(error);
-        
         return error500(error, res);
     } finally {
         await connection.release();
@@ -1623,8 +1621,6 @@ const getTicketReportsDownload = async (req, res) => {
 
         await connection.commit();
     } catch (error) {
-        console.log(error);
-        
         return error500(error, res);
     } finally {
         if (connection) connection.release();
