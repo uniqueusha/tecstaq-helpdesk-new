@@ -1584,7 +1584,7 @@ const getTicketReportsDownload = async (req, res) => {
 
         ticketReports = ticketReports.map((item, index) => ({
             "Sr No": index + 1,
-            "Create Date": item.cts,
+            "Create Date": item.created_at,
             "Assigned To":item.assigned_to_name,
             "Ticket No": item.ticket_no,
             "Subject": item.subject,
