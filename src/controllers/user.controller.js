@@ -2087,7 +2087,7 @@ const onStatusChangeCustomer = async (req, res) => {
 
 //tech under Company active
 const getTechCompanyWma = async (req, res) => {
-     const { user_id } = req.query;
+     const { user_id, customer_id} = req.query;
 
     // attempt to obtain a database connection
     let connection = await getConnection();
@@ -2103,6 +2103,9 @@ const getTechCompanyWma = async (req, res) => {
         WHERE 1 AND ca.status = 1 `;
         if (user_id){
             getTechCompanyQuery += ` AND ca.user_id = ${user_id} `;
+        }
+        if (customer_id){
+            getTechCompanyQuery += ` AND ca.customer_id = ${customer_id} `;
         }
         getTechCompanyQuery += ` ORDER BY ca.cts`;
         const getTechCompanyResult = await connection.query(getTechCompanyQuery);
