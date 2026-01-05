@@ -2097,9 +2097,10 @@ const getTechCompanyWma = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        let getTechCompanyQuery = `SELECT DISTINCT(ca.customer_id), c.company_name
+        let getTechCompanyQuery = `SELECT DISTINCT(ca.customer_id), c.company_name, u.user_name
         FROM customer_agents ca
         LEFT JOIN customers c ON c.customer_id = ca.customer_id
+        LEFT JOIN users u ON u.user_id = ca.user_id
         WHERE 1 AND ca.status = 1 `;
         if (user_id){
             getTechCompanyQuery += ` AND ca.user_id = ${user_id} `;
