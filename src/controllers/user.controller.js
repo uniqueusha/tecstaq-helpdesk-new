@@ -318,10 +318,10 @@ const password = "123456";
         // Check if user exists
         const userQuery = "SELECT * FROM customers WHERE customer_id  = ?";
         const userResult = await connection.query(userQuery, [customer_id]);
-        const domain = userResult[0].domain;
+        const domains = userResult[0].domain;
         //insert into sign up
         const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain, customer_id, user_id) VALUES (?, ?, ?, ?, ?, ?)`;
-        const insertSignUpValues = [ user_name, email_id, phone_number, domain, customerId, user_id ];
+        const insertSignUpValues = [ user_name, email_id, phone_number, domains, customer_id, user_id ];
         const insertSignUpResult = await connection.query(insertSignUpQuery, insertSignUpValues);
         }
         // let length = 8,
@@ -439,6 +439,8 @@ const password = "123456";
       });
     }
     } catch (error) {
+        console.log(error);
+        
         await connection.rollback();
         return error500(error, res);
     } finally {
