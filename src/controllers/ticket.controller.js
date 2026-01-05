@@ -346,7 +346,7 @@ const dbFilePath = `uploads/${fileName}`;
         
         await connection.commit();
 
-        const userQuery = `SELECT user_name, email_id FROM users WHERE role_id = 2 AND status = 1`;
+        const userQuery = `SELECT user_name, email_id FROM users WHERE role_id = 2 AND status = 1 customer_id = ${customer_id}`;
         const [userResult] = await connection.query(userQuery);
 
         for (let i = 0; i < userResult.length; i++) {
@@ -680,7 +680,7 @@ const getAllTickets = async (req, res) => {
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
         WHERE 1 `;
 
-        let countQuery = `SELECT COUNT(*) AS total FROM tickets t
+        let countQuery = `SELECT COUNT(DISTINCT t.ticket_id) AS total FROM tickets t
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
         LEFT JOIN ticket_attachments att ON att.ticket_id = t.ticket_id
         LEFT JOIN users u ON u.user_id = t.user_id
@@ -757,9 +757,11 @@ const getAllTickets = async (req, res) => {
 
         // Apply pagination if both page and perPage are provided
         let total = 0;
+        
         if (page && perPage) {
             const totalResult = await connection.query(countQuery);
             total = parseInt(totalResult[0][0].total);
+            console.log(total);
 
             const start = (page - 1) * perPage;
             getTicketsQuery += ` LIMIT ${perPage} OFFSET ${start}`;
@@ -1382,7 +1384,7 @@ const getAllTicketReports = async (req, res) => {
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
         WHERE 1 `;
 
-        let countQuery = `SELECT COUNT(*) AS total FROM tickets t
+        let countQuery = `SELECT COUNT(DISTINCT t.ticket_id) AS total FROM tickets t
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
         LEFT JOIN ticket_attachments att ON att.ticket_id = t.ticket_id
         LEFT JOIN users u ON u.user_id = t.user_id

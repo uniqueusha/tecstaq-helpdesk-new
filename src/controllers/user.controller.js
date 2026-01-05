@@ -312,6 +312,16 @@ const password = "123456";
         const insertuserResult = await connection.query(insertUserQuery, insertUserValues);
         const user_id = insertuserResult[0].insertId;
 
+        if(role_id == 3 && department_id == 0){
+        // Check if user exists
+        const userQuery = "SELECT * FROM customers WHERE customer_id  = ?";
+        const userResult = await connection.query(userQuery, [customer_id]);
+        const domain = userResult[0].domain;
+        //insert into sign up
+        const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain, customer_id, user_id) VALUES (?, ?, ?, ?, ?, ?)`;
+        const insertSignUpValues = [ user_name, email_id, phone_number, domain, customerId, user_id ];
+        const insertSignUpResult = await connection.query(insertSignUpQuery, insertSignUpValues);
+        }
         // let length = 8,
         // charset ="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
         // password = "";
