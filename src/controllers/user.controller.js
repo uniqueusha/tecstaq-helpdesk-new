@@ -455,6 +455,8 @@ const login = async (req, res) => {
   } else if (!password) {
     return error422("Password is required.", res);
   }
+//   email_id = atob(email_id);
+//   password = atob(password);
   // Attempt to obtain a database connection
   let connection = await getConnection();
   try {
