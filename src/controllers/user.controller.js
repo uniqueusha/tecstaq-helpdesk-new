@@ -59,6 +59,8 @@ error404 = (message, res) => {
 
 // Helper function to log activity
 async function logUserActivity({ user_id, session_id, ip_address, device_info, status, customer_id}) {
+      let connection = await pool.getConnection()
+
     try {
         if (status === "login") {
             await pool.query(
@@ -75,8 +77,12 @@ async function logUserActivity({ user_id, session_id, ip_address, device_info, s
                 [status, user_id, session_id]
             );
         }
+     await connection.commit()
     } catch (err) {
+        connection.rollback()
         console.error("Error logging user activity:", err);
+    } finally{
+      if (connection) await connection.release()
     }
 }
 //create user
