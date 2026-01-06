@@ -58,14 +58,14 @@ error404 = (message, res) => {
 };
 
 // Helper function to log activity
-async function logUserActivity({ user_id, session_id, ip_address, device_info, status }) {
+async function logUserActivity({ user_id, session_id, ip_address, device_info, status, customer_id}) {
     try {
         if (status === "login") {
             await pool.query(
                 `INSERT INTO user_activity_log 
-                 (user_id, session_id, login_time, ip_address, device_info, status) 
-                 VALUES (?, ?, NOW(), ?, ?, 'login')`,
-                [user_id, session_id, ip_address, device_info]
+                 (user_id, session_id, login_time, ip_address, device_info, status, customer_id) 
+                 VALUES (?, ?, NOW(), ?, ?, 'login', ?)`,
+                [user_id, session_id, ip_address, device_info, customer_id]
             );
         } else if (status === "logout" || status === "timeout" || status === "session_expired") {
             await pool.query(
@@ -268,7 +268,7 @@ const createUser = async (req, res) => {
   const isSite = req.body.isSite ? req.body.isSite : '';
   const serviceData = req.body.serviceData ? req.body.serviceData : [];
   const customerAgent = req.body.customerAgent ? req.body.customerAgent :[];
-const password = "123456";
+  const password = "123456";
 
   if (!user_name) {
     return error422("User name is required.", res);
@@ -318,7 +318,7 @@ const password = "123456";
         // Check if user exists
         const userQuery = "SELECT * FROM customers WHERE customer_id  = ?";
         const userResult = await connection.query(userQuery, [customer_id]);
-        const domains = userResult[0].domain;
+        const domains = userResult[0][0].domain;
         //insert into sign up
         const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain, customer_id, user_id) VALUES (?, ?, ?, ?, ?, ?)`;
         const insertSignUpValues = [ user_name, email_id, phone_number, domains, customer_id, user_id ];
@@ -484,7 +484,6 @@ const login = async (req, res) => {
             return error422("Password wrong.", res);
         }
 
-
         const userDataQuery = `SELECT u.*, d.department_name, r.role_name, c.customer_id, s.customer_id AS sign_customer_id, ca.customer_id AS cust_customer_id
         FROM users u
         LEFT JOIN departments d ON d.department_id = u.department_id
@@ -518,7 +517,8 @@ const login = async (req, res) => {
                 session_id, 
                 ip_address, 
                 device_info, 
-                status: "login" 
+                status: "login",
+                customer_id
             });
             
         // Commit the transaction
@@ -2239,11 +2239,17 @@ const getLog = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        let getLogQuery = `SELECT ual.*, u.user_name, c.company_name 
-        FROM user_activity_log ual 
-        LEFT JOIN customers c ON c.user_id = ual.user_id
+        let getLogQuery = `SELECT 
+        ual.*,
+        u.user_name,
+        COALESCE(c.company_name, c2.company_name) AS company_name
+        FROM user_activity_log ual
         LEFT JOIN users u ON u.user_id = ual.user_id
-        WHERE 1 `;
+        LEFT JOIN customers c ON c.user_id = ual.user_id
+        LEFT JOIN customer_agents ca ON ca.user_id = ual.user_id
+        LEFT JOIN customers c2 ON c2.customer_id = ca.customer_id
+        LEFT JOIN signup s  ON s.customer_id = ca.customer_id  
+`;
 
         let countQuery = `SELECT COUNT(*) AS total FROM user_activity_log ual 
         LEFT JOIN customers c ON c.user_id = ual.user_id
@@ -2277,6 +2283,7 @@ const getLog = async (req, res) => {
         //     getUserQuery += ` AND u.user_id = ${user_id} `;
         //     countQuery += ` AND u.user_id = ${user_id}  `;
         // }
+        getLogQuery += " GROUP BY ual.log_id";
         getLogQuery += " ORDER BY ual.created_at DESC";
 
         // Apply pagination if both page and perPage are provided
