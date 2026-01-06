@@ -285,6 +285,7 @@ const getDepartment = async (req, res) => {
 
 //get Department active...
 const getDepartmentsWma = async (req, res) => {
+    const { user_id } = req.query;
 
     // attempt to obtain a database connection
     let connection = await getConnection();
@@ -294,9 +295,13 @@ const getDepartmentsWma = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        const departmentQuery = `SELECT * FROM departments
-        
-        WHERE status = 1  ORDER BY department_name`;
+        const departmentQuery = `SELECT d.*, u.user_id FROM departments
+        LEFT JOIN users u ON u.department_id = d.department_id,
+        WHERE d.status = 1  ORDER BY d.department_name`;
+
+        if (user_id) {
+            departmentQuery += ` AND u.user_id = ${user_id} `;
+        }
 
         const departmentResult = await connection.query(departmentQuery);
         const department = departmentResult[0];

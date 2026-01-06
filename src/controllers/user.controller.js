@@ -2276,8 +2276,8 @@ const getLog = async (req, res) => {
         }
 
         if (user_id) {
-            getLogQuery += ` AND u.user_id = ${user_id} `;
-            countQuery += ` AND u.user_id = ${user_id}  `;
+            getLogQuery += ` AND ual.user_id = ${user_id} `;
+            countQuery += ` AND ual.user_id = ${user_id}  `;
         }
         if (customer_id) {
             getLogQuery += ` AND c.customer_id = ${customer_id} `;
