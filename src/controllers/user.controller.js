@@ -467,6 +467,8 @@ const login = async (req, res) => {
     WHERE TRIM(LOWER(u.email_id)) = ? AND u.status = 1`;
     const result = await connection.query(query, [email_id.toLowerCase()]);
     const check_user = result[0][0];
+  
+    
     if (!check_user) {
         return error422("Authentication failed.", res);
     }
@@ -493,8 +495,7 @@ const login = async (req, res) => {
         LEFT JOIN customer_agents ca ON ca.user_id = u.user_id
         WHERE u.user_id = ?`;
         let userDataResult = await connection.query(userDataQuery, [check_user.user_id]);
-
-
+    
         const session_id = Date.now().toString() + "_" + check_user.user_id; // simple unique session
 
         // Generate a JWT token
@@ -518,7 +519,7 @@ const login = async (req, res) => {
                 ip_address, 
                 device_info, 
                 status: "login",
-                customer_id
+                customer_id: userDataResult[0][0].customer_id || userDataResult[0][0].sign_customer_id || userDataResult[0][0].cust_customer_id
             });
             
         // Commit the transaction
@@ -2239,18 +2240,22 @@ const getLog = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        let getLogQuery = `SELECT 
-        ual.*,
-        u.user_name,
-        COALESCE(c.company_name, c2.company_name) AS company_name
-        FROM user_activity_log ual
+//         let getLogQuery = `SELECT 
+//         ual.*,
+//         u.user_name,
+//         COALESCE(c.company_name, c2.company_name) AS company_name
+//         FROM user_activity_log ual
+//         LEFT JOIN users u ON u.user_id = ual.user_id
+//         LEFT JOIN customers c ON c.user_id = ual.user_id
+//         LEFT JOIN customer_agents ca ON ca.user_id = ual.user_id
+//         LEFT JOIN customers c2 ON c2.customer_id = ca.customer_id
+//         LEFT JOIN signup s  ON s.customer_id = ca.customer_id  
+// `;
+         
+        let getLogQuery = `SELECT ual.*, c.company_name FROM user_activity_log ual
+        LEFT JOIN customers c ON c.customer_id = ual.customer_id
         LEFT JOIN users u ON u.user_id = ual.user_id
-        LEFT JOIN customers c ON c.user_id = ual.user_id
-        LEFT JOIN customer_agents ca ON ca.user_id = ual.user_id
-        LEFT JOIN customers c2 ON c2.customer_id = ca.customer_id
-        LEFT JOIN signup s  ON s.customer_id = ca.customer_id  
-`;
-
+        WHERE 1 `;
         let countQuery = `SELECT COUNT(*) AS total FROM user_activity_log ual 
         LEFT JOIN customers c ON c.user_id = ual.user_id
         LEFT JOIN users u ON u.user_id = ual.user_id
