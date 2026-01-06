@@ -2238,7 +2238,7 @@ const logout = async (req, res) => {
 
 // get log list...
 const getLog = async (req, res) => {
-    const { page, perPage, key, user_id, customer_id } = req.query;
+    const { page, perPage, key, user_id, customer_id, fromDate, toDate } = req.query;
 
     // attempt to obtain a database connection
     let connection = await getConnection();
@@ -2283,6 +2283,10 @@ const getLog = async (req, res) => {
             }
         }
 
+        if (fromDate && toDate) {
+            getLogQuery += ` AND DATE(ual.created_at) BETWEEN '${fromDate}' AND '${toDate}'`;
+            countQuery += ` AND DATE(ual.created_at) BETWEEN '${fromDate}' AND '${toDate}'`;
+        }
         if (user_id) {
             getLogQuery += ` AND ual.user_id = ${user_id} `;
             countQuery += ` AND ual.user_id = ${user_id}  `;
