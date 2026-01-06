@@ -295,12 +295,13 @@ const getDepartmentsWma = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        let departmentQuery = `SELECT d.*, u.user_id FROM departments d
-        LEFT JOIN users u ON u.department_id = d.department_id
+        let departmentQuery = `SELECT d.*, ca.user_id FROM departments d
+        LEFT JOIN customer_agents ca ON ca.department_id = d.department_id
+        LEFT JOIN customes c ON c.customer_id = ca.customer_id
         WHERE d.status = 1 `;
 
         if (user_id) {
-            departmentQuery += ` AND u.user_id = ${user_id} `;
+            departmentQuery += ` AND ca.user_id = ${user_id} `;
         }
         departmentQuery += ` GROUP BY d.department_id`;
         departmentQuery += ` ORDER BY d.department_name`;
