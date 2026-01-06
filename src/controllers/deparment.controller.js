@@ -302,6 +302,7 @@ const getDepartmentsWma = async (req, res) => {
         if (user_id) {
             departmentQuery += ` AND u.user_id = ${user_id} `;
         }
+        departmentQuery += ` GROUP BY d.department_id`;
         departmentQuery += ` ORDER BY d.department_name`;
         const departmentResult = await connection.query(departmentQuery);
         const department = departmentResult[0];
