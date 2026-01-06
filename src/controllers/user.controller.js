@@ -2252,7 +2252,7 @@ const getLog = async (req, res) => {
 //         LEFT JOIN signup s  ON s.customer_id = ca.customer_id  
 // `;
          
-        let getLogQuery = `SELECT ual.*, c.company_name FROM user_activity_log ual
+        let getLogQuery = `SELECT ual.*, c.company_name, u.user_name FROM user_activity_log ual
         LEFT JOIN customers c ON c.customer_id = ual.customer_id
         LEFT JOIN users u ON u.user_id = ual.user_id
         WHERE 1 `;
