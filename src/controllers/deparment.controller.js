@@ -297,7 +297,7 @@ const getDepartmentsWma = async (req, res) => {
 
         let departmentQuery = `SELECT d.*, ca.user_id FROM departments d
         LEFT JOIN customer_agents ca ON ca.department_id = d.department_id
-        LEFT JOIN customes c ON c.customer_id = ca.customer_id
+        LEFT JOIN customers c ON c.customer_id = ca.customer_id
         WHERE d.status = 1 `;
 
         if (user_id) {
