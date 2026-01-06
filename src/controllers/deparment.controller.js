@@ -295,14 +295,14 @@ const getDepartmentsWma = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        const departmentQuery = `SELECT d.*, u.user_id FROM departments
-        LEFT JOIN users u ON u.department_id = d.department_id,
-        WHERE d.status = 1  ORDER BY d.department_name`;
+        let departmentQuery = `SELECT d.*, u.user_id FROM departments d
+        LEFT JOIN users u ON u.department_id = d.department_id
+        WHERE d.status = 1 `;
 
         if (user_id) {
             departmentQuery += ` AND u.user_id = ${user_id} `;
         }
-
+        departmentQuery += ` ORDER BY d.department_name`;
         const departmentResult = await connection.query(departmentQuery);
         const department = departmentResult[0];
 
