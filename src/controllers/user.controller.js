@@ -455,14 +455,14 @@ const createUser = async (req, res) => {
 //login
 const login = async (req, res) => {
   let email_id = req.body.email_id ? req.body.email_id.trim() : "";
-  const password = req.body.password ? req.body.password.trim() : "";
+  let password = req.body.password ? req.body.password.trim() : "";
   if (!email_id) {
     return error422("Email id is required.", res);
   } else if (!password) {
     return error422("Password is required.", res);
   }
-//   email_id = atob(email_id);
-//   password = atob(password);
+  email_id = atob(email_id);
+  password = atob(password);
   // Attempt to obtain a database connection
   let connection = await getConnection();
   try {
