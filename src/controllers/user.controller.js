@@ -491,7 +491,7 @@ const login = async (req, res) => {
 
         const isPasswordValid = await bcrypt.compare(password, user_untitled.extenstions);
         if (!isPasswordValid) {
-            return error422("Password wrong.", res);
+            return error422("Authentication failed.", res);
         }
 
         const userDataQuery = `SELECT u.*, d.department_name, r.role_name, c.customer_id, s.customer_id AS sign_customer_id, ca.customer_id AS cust_customer_id
