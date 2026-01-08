@@ -90,7 +90,7 @@ const updateTicketCategories = async (req, res) => {
     const parent_category = req.body.parent_category ? req.body.parent_category.trim() :'';
     const name = req.body.name ? req.body.name.trim() :'';
     const department_id  = req.body.department_id  ? req.body.department_id:'';
-    const priority_id  = req.body.priority_id ? req.body.priority_id.trim() :'';
+    const priority_id  = req.body.priority_id ? req.body.priority_id :'';
     const sla_hours = req.body.sla_hours ? req.body.sla_hours.trim() :'';
     const description = req.body.description ? req.body.description.trim():'';
     
