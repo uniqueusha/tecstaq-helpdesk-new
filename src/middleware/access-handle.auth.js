@@ -11,7 +11,7 @@ const accessHandle = (allowedRoles = []) => {
             })
         }
 
-        const roleId = user.department_id;
+        const roleId = user.role_id;
 
         // If allowedRoles array has roles → check access
         if (allowedRoles.length > 0 && !allowedRoles.includes(roleId)) {
