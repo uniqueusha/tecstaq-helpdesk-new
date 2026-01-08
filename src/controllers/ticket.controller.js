@@ -371,6 +371,10 @@ const dbFilePath = `uploads/${fileName}`;
         const priorityDataQuery = `SELECT name FROM priorities WHERE priority_id = ?`;
         const [priorityDataResult] = await connection.query(priorityDataQuery,[priority_id]);
 
+         const customerQuery = `SELECT email_id FROM customers WHERE customer_id = ?`;
+        const [customerResult] = await connection.query(customerQuery,[customer_id]);
+
+
         const created_user_name = userDataResult[0].user_name;
         const created_email_id = userDataResult[0].email_id;
         const category_name = categoryDataResult[0].name;
@@ -378,6 +382,8 @@ const dbFilePath = `uploads/${fileName}`;
         const assigned_user_name = userAssignedDataResult.user_name || null;
         const email_id = userAssignedDataResult.email_id || null;
         const created_at = createdAtResult[0].created_at.toISOString().split('T')[0];
+        const customer_email_id = customerResult[0].email_id;
+
 
         const message = `
         <!DOCTYPE html>
@@ -418,7 +424,7 @@ const dbFilePath = `uploads/${fileName}`;
         // Prepare the email message options.
         const mailOptions = {
             from: "support@tecstaq.com", // Sender address from environment variables.
-            to: [created_email_id, email_id, technician_email_id], // Recipient's name and email address."sushantsjamdade@gmail.com",
+            to: [created_email_id, email_id, technician_email_id, customer_email_id], // Recipient's name and email address."sushantsjamdade@gmail.com",
             // bcc: ["sushantsjamdade@gmail.com"],
             subject: `Ticket ${ticket_no} Created Successfully`,
             html: message,
@@ -570,9 +576,7 @@ for (let i = 0; i < userResult.length; i++) {
         const priorityDataQuery = `SELECT name FROM priorities WHERE priority_id = ?`;
         const [priorityDataResult] = await connection.query(priorityDataQuery,[priority_id]);
 
-        const customerQuery = `SELECT email_id FROM customers WHERE customer_id = ?`;
-        const [customerResult] = await connection.query(priorityDataQuery,[customer_id]);
-
+       
         const created_user_name = userDataResult[0].user_name;
         const created_email_id = userDataResult[0].email_id;
         const category_name = categoryDataResult[0].name;
@@ -584,7 +588,6 @@ for (let i = 0; i < userResult.length; i++) {
         const ticket_status = createdAtResult[0].ticket_status;
         const assigned_name = assginedResult[0].user_name;
         const created_at = createdAtResult[0].created_at.toISOString().split('T')[0];
-        const customer_email_id = customerResult[0].email_id;
 
         const message = `
         <!DOCTYPE html>
@@ -627,7 +630,7 @@ for (let i = 0; i < userResult.length; i++) {
         // Prepare the email message options.
         const mailOptions = {
             from: "support@tecstaq.com", // Sender address from environment variables.
-            to: [created_email_id, email_id, technician_email_id, customer_email_id], // Recipient's name and email address."sushantsjamdade@gmail.com",
+            to: [created_email_id, email_id, technician_email_id], // Recipient's name and email address."sushantsjamdade@gmail.com",
             // bcc: ["sushantsjamdade@gmail.com"],
             subject: `Ticket ${ticket_no} Update Successfully`,
             html: message,
