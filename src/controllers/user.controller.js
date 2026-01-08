@@ -494,31 +494,8 @@ const login = async (req, res) => {
             return error422("Authentication failed.", res);
         }
 
-        const userDataQuery = `SELECT u.*, d.department_name, r.role_name, c.customer_id, s.customer_id AS sign_customer_id, ca.customer_id AS cust_customer_id
-        FROM users u
-        LEFT JOIN departments d ON d.department_id = u.department_id
-        LEFT JOIN roles r ON r.role_id = u.role_id
-        LEFT JOIN customers c ON c.user_id = u.user_id
-        LEFT JOIN signup s ON s.user_id = u.user_id
-        LEFT JOIN customer_agents ca ON ca.user_id = u.user_id
-        WHERE u.user_id = ?`;
-        let userDataResult = await connection.query(userDataQuery, [check_user.user_id]);
-    
-        const session_id = Date.now().toString() + "_" + check_user.user_id; // simple unique session
-
-        // Generate a JWT token
-        const token = jwt.sign(
-            {
-                user_id: user_untitled.user_id,
-                email_id: check_user.email_id,
-                role_id: check_user.role_id,
-                session_id
-            },
-            // process.env.JWT_SECRET,
-             "secret_this_should_be", // Use environment variable for secret key
-            { expiresIn: "1h" }
-        );
-            // Log login activity
+         const session_id = Date.now().toString() + "_" + check_user.user_id; // simple unique session
+        // Log login activity
             const ip_address = req.ip;
             const device_info = req.headers['user-agent'] || "Unknown device";
             
@@ -530,6 +507,31 @@ const login = async (req, res) => {
                 status: "login",
                 customer_id: userDataResult[0][0].customer_id || userDataResult[0][0].sign_customer_id || userDataResult[0][0].cust_customer_id
             });
+        // Generate a JWT token
+        const token = jwt.sign(
+            {
+                user_id: user_untitled.user_id,
+                email_id: check_user.email_id,
+                role_id: check_user.role_id,
+                session_id: session_id
+            },
+            // process.env.JWT_SECRET,
+             "secret_this_should_be", // Use environment variable for secret key
+            { expiresIn: "1h" }
+        );
+            
+
+        const userDataQuery = `SELECT u.*, d.department_name, r.role_name, c.customer_id, s.customer_id AS sign_customer_id, ca.customer_id AS cust_customer_id
+        FROM users u
+        LEFT JOIN departments d ON d.department_id = u.department_id
+        LEFT JOIN roles r ON r.role_id = u.role_id
+        LEFT JOIN customers c ON c.user_id = u.user_id
+        LEFT JOIN signup s ON s.user_id = u.user_id
+        LEFT JOIN customer_agents ca ON ca.user_id = u.user_id
+        WHERE u.user_id = ?`;
+        let userDataResult = await connection.query(userDataQuery, [check_user.user_id]);
+    
+       
             
         // Commit the transaction
         await connection.commit();

@@ -15,6 +15,8 @@ module.exports = (req, res, next) => {
         email_id: decodedToken.email_id,
         user_id: decodedToken.user_id,
         role_id: decodedToken.role_id,
+        session_id: decodedToken.session_id,
+
       };
       next();
     }
