@@ -570,6 +570,9 @@ for (let i = 0; i < userResult.length; i++) {
         const priorityDataQuery = `SELECT name FROM priorities WHERE priority_id = ?`;
         const [priorityDataResult] = await connection.query(priorityDataQuery,[priority_id]);
 
+        const customerQuery = `SELECT email_id FROM customers WHERE customer_id = ?`;
+        const [customerResult] = await connection.query(priorityDataQuery,[customer_id]);
+
         const created_user_name = userDataResult[0].user_name;
         const created_email_id = userDataResult[0].email_id;
         const category_name = categoryDataResult[0].name;
@@ -581,6 +584,7 @@ for (let i = 0; i < userResult.length; i++) {
         const ticket_status = createdAtResult[0].ticket_status;
         const assigned_name = assginedResult[0].user_name;
         const created_at = createdAtResult[0].created_at.toISOString().split('T')[0];
+        const customer_email_id = customerResult[0].email_id;
 
         const message = `
         <!DOCTYPE html>
@@ -623,7 +627,7 @@ for (let i = 0; i < userResult.length; i++) {
         // Prepare the email message options.
         const mailOptions = {
             from: "support@tecstaq.com", // Sender address from environment variables.
-            to: [created_email_id, email_id, technician_email_id], // Recipient's name and email address."sushantsjamdade@gmail.com",
+            to: [created_email_id, email_id, technician_email_id, customer_email_id], // Recipient's name and email address."sushantsjamdade@gmail.com",
             // bcc: ["sushantsjamdade@gmail.com"],
             subject: `Ticket ${ticket_no} Update Successfully`,
             html: message,
@@ -858,36 +862,19 @@ const getTicketStatusCount = async (req, res) => {
     try {
         await connection.beginTransaction();
 
-        let ticket_status_total_count = 0;
-
-        // Step 1: Get total count of all tickets (with filters if needed)
-        let totalCountQuery = `
-            SELECT COUNT(*) AS total, c.customer_id
-            FROM tickets t
-            LEFT JOIN customers c ON c.user_id = t.user_id
-            LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id 
-            LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
-            WHERE 1
-        `;
-        if (user_id) {
-            totalCountQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
-        }
-        if (customer_id) {
-            totalCountQuery += ` AND t.customer_id = ${customer_id}`;
-        }
-
-        const totalCountResult = await connection.query(totalCountQuery);
-        ticket_status_total_count = parseInt(totalCountResult[0][0].total);
 
         let statusCountQuery = `
             SELECT 
-                t.ticket_status,c.customer_id,
+                
                 COUNT(*) AS count
             FROM tickets t 
-            LEFT JOIN customers c ON c.user_id = t.user_id
-            LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
-            LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
-            WHERE 1
+            LEFT JOIN users u ON u.user_id = t.user_id
+        LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
+        LEFT JOIN users u1 ON u1.user_id = ta.assigned_to
+        LEFT JOIN ticket_categories tc ON tc.ticket_category_id = t.ticket_category_id
+        LEFT JOIN customers c ON c.customer_id = t.customer_id
+        LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
+        WHERE 1
         `;
         
         if (user_id) {
@@ -915,13 +902,11 @@ const getTicketStatusCount = async (req, res) => {
         const data = {
             status: 200,
             message: "Ticket dashboard status count retrieved successfully",
-            ticket_status_total_count,
             ticket_status_counts
         };
         await connection.commit();
         return res.status(200).json(data);
     } catch (error) {
-    
         await connection.rollback();
         return error500(error, res);
     } finally {
