@@ -36,62 +36,62 @@ app.use(
     },
   })
 );
-app.use((req, res, next) => {
-  const allowedHosts = [
-    "support.tecstaq.com",
-    "localhost"
-  ];
+// app.use((req, res, next) => {
+//   const allowedHosts = [
+//     "support.tecstaq.com",
+//     "localhost"
+//   ];
 
-  const requestHost = req.headers.host?.split(":")[0];
+//   const requestHost = req.headers.host?.split(":")[0];
   
-  if (!allowedHosts.includes(requestHost)) {
-    return res.status(403).json({
-      status: 403,
-      message: "Forbidden: Direct IP access is not allowed"
-    });
-  }
+//   if (!allowedHosts.includes(requestHost)) {
+//     return res.status(403).json({
+//       status: 403,
+//       message: "Forbidden: Direct IP access is not allowed"
+//     });
+//   }
 
-  next();
-});
+//   next();
+// });
 
-const allowedOrigins = [
-    "https://support.crm.tecstaq.com",
-    "http://localhost:4200"
-];
+// const allowedOrigins = [
+//     "https://support.crm.tecstaq.com",
+//     "http://localhost:4200"
+// ];
 
-app.use((req, res, next) => {
-    const origin = req.headers.origin;
+// app.use((req, res, next) => {
+//     const origin = req.headers.origin;
 
-    // Allow only whitelisted domains
-    if (allowedOrigins.includes(origin)) {
-        res.setHeader("Access-Control-Allow-Origin", origin);
-    } else {
-        return res.status(403).json({
-            status: 404,
-            message: "CORS Blocked: Origin not allowed"
-        });
-    }
-       res.setHeader("Access-Control-Allow-Credentials", "true");
-    res.setHeader(
-        "Access-Control-Allow-Headers",
-        "Origin, X-Requested-With, Content-Type, Accept, Authorization"
-    );
-    next();
-});
-app.disable('x-powered-by');
-
-// app.use((req,res,next)=>{
-//     res.setHeader("Access-Control-Allow-Origin","*");
+//     // Allow only whitelisted domains
+//     if (allowedOrigins.includes(origin)) {
+//         res.setHeader("Access-Control-Allow-Origin", origin);
+//     } else {
+//         return res.status(403).json({
+//             status: 404,
+//             message: "CORS Blocked: Origin not allowed"
+//         });
+//     }
+//        res.setHeader("Access-Control-Allow-Credentials", "true");
 //     res.setHeader(
 //         "Access-Control-Allow-Headers",
-//         "Origin,X-Requested-With,Content-Type,Accept, Authorization"
-//     );
-//     res.setHeader(
-//         "Access-Control-Allow-Methods",
-//         "GET,POST,PATCH,PUT,DELETE,OPTIONS" 
+//         "Origin, X-Requested-With, Content-Type, Accept, Authorization"
 //     );
 //     next();
 // });
+// app.disable('x-powered-by');
+
+app.use((req,res,next)=>{
+    res.setHeader("Access-Control-Allow-Origin","*");
+    res.setHeader(
+        "Access-Control-Allow-Headers",
+        "Origin,X-Requested-With,Content-Type,Accept, Authorization"
+    );
+    res.setHeader(
+        "Access-Control-Allow-Methods",
+        "GET,POST,PATCH,PUT,DELETE,OPTIONS" 
+    );
+    next();
+});
 
 app.get('/health', async (req, res) => {
     res.json("Help Desk Server is running");

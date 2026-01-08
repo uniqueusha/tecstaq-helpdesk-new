@@ -494,7 +494,18 @@ const login = async (req, res) => {
             return error422("Authentication failed.", res);
         }
 
-         const session_id = Date.now().toString() + "_" + check_user.user_id; // simple unique session
+         
+        const userDataQuery = `SELECT u.*, d.department_name, r.role_name, c.customer_id, s.customer_id AS sign_customer_id, ca.customer_id AS cust_customer_id
+        FROM users u
+        LEFT JOIN departments d ON d.department_id = u.department_id
+        LEFT JOIN roles r ON r.role_id = u.role_id
+        LEFT JOIN customers c ON c.user_id = u.user_id
+        LEFT JOIN signup s ON s.user_id = u.user_id
+        LEFT JOIN customer_agents ca ON ca.user_id = u.user_id
+        WHERE u.user_id = ?`;
+        let userDataResult = await connection.query(userDataQuery, [check_user.user_id]);
+    
+       const session_id = Date.now().toString() + "_" + check_user.user_id; // simple unique session
         // Log login activity
             const ip_address = req.ip;
             const device_info = req.headers['user-agent'] || "Unknown device";
@@ -521,17 +532,6 @@ const login = async (req, res) => {
         );
             
 
-        const userDataQuery = `SELECT u.*, d.department_name, r.role_name, c.customer_id, s.customer_id AS sign_customer_id, ca.customer_id AS cust_customer_id
-        FROM users u
-        LEFT JOIN departments d ON d.department_id = u.department_id
-        LEFT JOIN roles r ON r.role_id = u.role_id
-        LEFT JOIN customers c ON c.user_id = u.user_id
-        LEFT JOIN signup s ON s.user_id = u.user_id
-        LEFT JOIN customer_agents ca ON ca.user_id = u.user_id
-        WHERE u.user_id = ?`;
-        let userDataResult = await connection.query(userDataQuery, [check_user.user_id]);
-    
-       
             
         // Commit the transaction
         await connection.commit();
@@ -544,6 +544,8 @@ const login = async (req, res) => {
         });
 
     } catch (error) {
+        console.log(error);
+        
         return error500(error, res)
     } finally {
         await connection.release();
