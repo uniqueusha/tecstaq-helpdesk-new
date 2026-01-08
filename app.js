@@ -3,6 +3,8 @@ const bodyParser=require("body-parser");
 const app=express();
 const path = require("path");   
 const helmet = require("helmet");
+const cors = require('cors');
+
 
 app.use(express.json({ limit: '100mb' }));  
 app.use("/images", express.static(path.join(__dirname, "images")));

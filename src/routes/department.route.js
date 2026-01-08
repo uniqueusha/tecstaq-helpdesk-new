@@ -2,21 +2,22 @@ const express = require('express')
 const departmentController = require('../controllers/deparment.controller')
 const router = express.Router();
 const checkAuth = require('../middleware/check.auth')
+const accessHandle = require('../middleware/access-handle.auth');
 
 //create department
-router.post('/', departmentController.createDepartment);
+router.post('/', checkAuth, accessHandle([5]),departmentController.createDepartment);
 //get department
-router.get('/', departmentController.getAllDepartment);
+router.get('/', checkAuth, accessHandle([5]),departmentController.getAllDepartment);
 //download
-router.get('/download', departmentController.getDepartmentDownload);
+router.get('/download', checkAuth, accessHandle([5]),departmentController.getDepartmentDownload);
 //active list
-router.get('/wma', departmentController.getDepartmentsWma);
+router.get('/wma', checkAuth, accessHandle([1,2,3,5]),departmentController.getDepartmentsWma);
 //get id by department
-router.get('/:id', departmentController.getDepartment);
+router.get('/:id', checkAuth, accessHandle([5]),departmentController.getDepartment);
 //update department
-router.put('/:id', departmentController.updateDepartment);
+router.put('/:id', checkAuth, accessHandle([5]),departmentController.updateDepartment);
 //status change
-router.patch('/:id', departmentController.onStatusChange);
+router.patch('/:id', checkAuth, accessHandle([5]),departmentController.onStatusChange);
 
 
 module.exports = router
