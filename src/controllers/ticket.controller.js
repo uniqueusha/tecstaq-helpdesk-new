@@ -858,7 +858,7 @@ const getTicket = async (req, res) => {
 }
 
 //dashboard ticket status count
-const getTicketStatusCount = async (req, res) => {
+const getTicketStatusCountold = async (req, res) => {
     const { user_id, customer_id } = req.query;
     let connection = await getConnection();
 
@@ -916,6 +916,70 @@ const getTicketStatusCount = async (req, res) => {
         await connection.release();
     }
 };
+
+const getTicketStatusCount = async (req, res) => {
+    const { user_id, customer_id } = req.query;
+    let connection = await getConnection();
+
+    try {
+        await connection.beginTransaction();
+
+        let statusCountQuery = `
+            SELECT 
+                t.ticket_status,
+                COUNT(DISTINCT t.ticket_id) AS count
+            FROM tickets t
+            LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
+            LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
+            WHERE 1
+        `;
+
+        if (user_id) {
+            statusCountQuery += `
+                AND (
+                    t.user_id = ${user_id}
+                    OR ta.assigned_to = ${user_id}
+                    OR (ta.assigned_to IS NULL AND ca.user_id = ${user_id})
+                )
+            `;
+        }
+
+        if (customer_id) {
+            statusCountQuery += ` AND t.customer_id = ${customer_id}`;
+        }
+
+        statusCountQuery += ` GROUP BY t.ticket_status`;
+
+        const [statusCountResult] = await connection.query(statusCountQuery);
+
+        const defaultStatuses = ["Open", "In Progress", "On Hold", "Resolved", "Closed"];
+
+        const ticket_status_counts = defaultStatuses.map(status => {
+            const found = statusCountResult.find(
+                row => row.ticket_status === status
+            );
+            return {
+                ticket_status: status,
+                count: found ? Number(found.count) : 0
+            };
+        });
+
+        await connection.commit();
+
+        return res.status(200).json({
+            status: 200,
+            message: "Ticket dashboard status count retrieved successfully",
+            ticket_status_counts
+        });
+
+    } catch (error) {
+        await connection.rollback();
+        return error500(error, res);
+    } finally {
+        await connection.release();
+    }
+};
+
 
 const getMonthWiseStatusCount = async (req, res) => {
     const { user_id, customer_id } = req.query;
@@ -1278,7 +1342,7 @@ const getStatusList = async (req, res) => {
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
         WHERE 1 AND t.ticket_status = '${ticket_status}'`;
 
-        let countQuery = `SELECT COUNT(*) AS total FROM tickets t
+        let countQuery = `SELECT COUNT(DISTINCT t.ticket_id) AS total FROM tickets t
         LEFT JOIN users u ON u.user_id = t.user_id
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
         LEFT JOIN users u1 ON u1.user_id = ta.assigned_to

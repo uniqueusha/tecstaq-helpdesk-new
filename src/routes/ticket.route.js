@@ -14,7 +14,7 @@ router.get('/report', checkAuth, accessHandle([1,2,3,5]),ticketController.getAll
 //report download
 router.get('/dowmload-report', checkAuth, accessHandle([1,2,3,5]),ticketController.getTicketReportsDownload);
 //status count
-router.get('/status-count', checkAuth, accessHandle([1,2,3,5]),ticketController.getTicketStatusCount);
+router.get('/status-count', ticketController.getTicketStatusCount);
 //Month Wise Status Count
 router.get('/month-wise-status-count', checkAuth, accessHandle([1,2,3,5]),ticketController.getMonthWiseStatusCount);
 //todat open ticket
