@@ -247,7 +247,7 @@ const createTicket = async (req, res)=>{
     const ticket_status = req.body.ticket_status ? req.body.ticket_status.trim() : null;
     const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
     const ticket_conversation_id = req.body.ticket_conversation_id ? req.body.ticket_conversation_id : null;
-    const base64PDF = req.body.file_path ? req.body.file_path.trim() :'';
+    const base64PDF = req.body.file_path ? req.body.file_path.trim() :'null';
     const assigned_to = req.body.assigned_to ? req.body.assigned_to : null;
     // const remark = req.body.remark ? req.body.remark.trim() :'';
     // const assigned_at = req.body.assigned_at ? req.body.assigned_at : '';
@@ -1230,6 +1230,7 @@ const getTicketDownload = async (req, res) => {
         LEFT JOIN users u3 ON u3.user_id = att.uploaded_by 
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id
+        LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
         WHERE 1 `;
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
@@ -1241,7 +1242,7 @@ const getTicketDownload = async (req, res) => {
         }
 
         if (user_id) {
-            getTicketQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
+            getTicketQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
         }
 
         if (assigned_to) {
@@ -1278,7 +1279,7 @@ const getTicketDownload = async (req, res) => {
 
         ticket = ticket.map((item, index) => ({
             "Sr No": index + 1,
-            "Create Date": item.cts,
+            "Create Date": item.created_at,
             "Assigned To":item.assigned_to_name,
             "Ticket No": item.ticket_no,
             "Subject": item.subject,
