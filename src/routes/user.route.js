@@ -18,7 +18,7 @@ const loginRateLimiter = rateLimit({
   legacyHeaders: false,
 }); 
 //create organization
-router.post('/', checkAuth, accessHandle([5]),userController.createUser);
+router.post('/', checkAuth, accessHandle([1,5]),userController.createUser);
 //login  
 router.post('/login', loginRateLimiter,userController.login);
 //logout
