@@ -351,6 +351,7 @@ const dbFilePath = `uploads/${fileName}`;
         WHERE u.role_id = 2 AND u.status = 1 AND ca.customer_id = ${customer_id}`;
         const [userResult] = await connection.query(userQuery);
 
+
         for (let i = 0; i < userResult.length; i++) {
             const element = userResult[i];
             const technician_name = userResult[i].user_name;
@@ -444,6 +445,8 @@ const dbFilePath = `uploads/${fileName}`;
     }
     }
     } catch (error) {
+        console.log(error);
+        
         await connection.rollback();
         return error500(error, res);
     } finally{
@@ -458,8 +461,7 @@ const updateTicket = async (req, res) => {
     const priority_id = req.body.priority_id ? req.body.priority_id :'';
     const department_id = req.body.department_id ? req.body.department_id :'';
     const subject = req.body.subject ? req.body.subject.trim() :'';
-        const customer_id = req.body.customer_id ? req.body.customer_id :'';
-
+    const customer_id = req.body.customer_id ? req.body.customer_id :'';
     const description = req.body.description ? req.body.description.trim() :'';
     const ticket_status = req.body.ticket_status ? req.body.ticket_status.trim() : '';
     // const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
@@ -527,8 +529,10 @@ const updateTicket = async (req, res) => {
         fs.writeFileSync(filePath, pdfBuffer);
 
         const dbFilePath = `uploads/${fileName}`;
-        const updateTicketAttachmentQuery = "UPDATE ticket_attachments SET ticket_id = ?, ticket_conversation_id = ?, file_path = ?  WHERE ticket_id = ?";
-        const updateTicketAttachmentResult = await connection.query(updateTicketAttachmentQuery,[ticketId, ticket_conversation_id, dbFilePath,  ticketId]);
+        // const updateTicketAttachmentQuery = "UPDATE ticket_attachments SET ticket_id = ?, ticket_conversation_id = ?, file_path = ?  WHERE ticket_id = ?";
+        // const updateTicketAttachmentResult = await connection.query(updateTicketAttachmentQuery,[ticketId, ticket_conversation_id, dbFilePath,  ticketId]);
+        const insertTicketAttachmentQuery = "INSERT INTO ticket_attachments (ticket_id, ticket_conversation_id, file_path, uploaded_by)VALUES(?, ?, ?, ?)";
+        const insertTicketAttachmentResult = await connection.query(insertTicketAttachmentQuery,[ticket_id, ticket_conversation_id, dbFilePath, user_id]);
 
         const updateTicketAssignedQuery = "UPDATE ticket_assignments SET ticket_id = ?, assigned_to = ?, assigned_at = ?, remarks = ? WHERE ticket_id = ?";
         const updateTicketAssignedResult = await connection.query(updateTicketAssignedQuery,[ticketId, assigned_to, assigned_at, remarks, ticketId]);
@@ -845,6 +849,15 @@ const getTicket = async (req, res) => {
         ticket["ticketStatusHistory"] = ticketStatusHistoryResult[0];
         
 
+        // get ticket Attach history
+        let ticketAttachHistoryQuery = `SELECT tac.*, u.user_name FROM ticket_attachments tac 
+        LEFT JOIN users u ON u.user_id = tac.uploaded_by 
+        WHERE tac.ticket_id = ?`;
+        ticketAttachHistoryQuery += ` ORDER BY tac.uploaded_at DESC`;
+        let ticketAttachHistoryResult = await connection.query(ticketAttachHistoryQuery, [ticketId]);
+        ticket["ticketAttachHistory"] = ticketAttachHistoryResult[0];
+        
+
         return res.status(200).json({
             status: 200,
             message: "Ticket Retrived Successfully",
@@ -979,7 +992,6 @@ const getTicketStatusCount = async (req, res) => {
         await connection.release();
     }
 };
-
 
 const getMonthWiseStatusCount = async (req, res) => {
     const { user_id, customer_id } = req.query;
@@ -1161,9 +1173,9 @@ const getTodayOpenTicketList = async (req, res) => {
 
 // gst doc download
 const getDocumentDownload = async (req, res) => {
-    const { ticket_id } = req.query;
+    const { ticket_attachment_id } = req.query;
     
-    if (!ticket_id) {
+    if (!ticket_attachment_id) {
         return error422("Ticket id required",res);
     }
 
@@ -1173,8 +1185,8 @@ const getDocumentDownload = async (req, res) => {
         await connection.beginTransaction();
 
         const [rows] = await connection.query(
-            `SELECT file_path FROM ticket_attachments WHERE ticket_id = ?`,
-            [ticket_id]
+            `SELECT file_path FROM ticket_attachments WHERE ticket_attachment_id = ?`,
+            [ticket_attachment_id]
         );
 
         if (!rows.length) {
