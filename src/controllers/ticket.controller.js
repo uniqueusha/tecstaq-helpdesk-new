@@ -466,7 +466,7 @@ const updateTicket = async (req, res) => {
     const ticket_status = req.body.ticket_status ? req.body.ticket_status.trim() : '';
     // const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
     const ticket_conversation_id = req.body.ticket_conversation_id ? req.body.ticket_conversation_id : null;
-    const base64PDF = req.body.file_path ? req.body.file_path.trim() :'';
+    const base64PDF = req.body.file_path ? req.body.file_path.trim() : null;
     const assigned_to = req.body.assigned_to ? req.body.assigned_to : '';
         // const remark = req.body.remark ? req.body.remark.trim() :'';
     const assigned_at = req.body.assigned_at ? req.body.assigned_at : null;
@@ -514,7 +514,8 @@ const updateTicket = async (req, res) => {
             WHERE ticket_id = ?
         `;
         await connection.query(updateQuery, [  ticket_category_id, priority_id, department_id, subject,  description, ticket_status, ticket_status, ticketId]);
-
+ 
+        if (base64PDF) {
         const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
         const pdfBuffer = Buffer.from(cleanedBase64, "base64");
 
@@ -533,7 +534,7 @@ const updateTicket = async (req, res) => {
         // const updateTicketAttachmentResult = await connection.query(updateTicketAttachmentQuery,[ticketId, ticket_conversation_id, dbFilePath,  ticketId]);
         const insertTicketAttachmentQuery = "INSERT INTO ticket_attachments (ticket_id, ticket_conversation_id, file_path, uploaded_by)VALUES(?, ?, ?, ?)";
         const insertTicketAttachmentResult = await connection.query(insertTicketAttachmentQuery,[ticketId, ticket_conversation_id, dbFilePath, user_id]);
-
+    }
         const updateTicketAssignedQuery = "UPDATE ticket_assignments SET ticket_id = ?, assigned_to = ?, assigned_at = ?, remarks = ? WHERE ticket_id = ?";
         const updateTicketAssignedResult = await connection.query(updateTicketAssignedQuery,[ticketId, assigned_to, assigned_at, remarks, ticketId]);
 

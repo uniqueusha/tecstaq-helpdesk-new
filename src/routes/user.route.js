@@ -5,22 +5,22 @@ const checkAuth = require('../middleware/check.auth')
 const accessHandle = require('../middleware/access-handle.auth');
 const rateLimit = require("express-rate-limit");
 
-const loginRateLimiter = rateLimit({
-  windowMs: 5 * 60 * 1000,       // 5 minutes
-  max: 3,    
-  skipSuccessfulRequests: true,   
-  skipFailedRequests: false,     
-  message: {
-    status: 429,
-    message: "Too many login attempts. Please try again later."
-  },
-  standardHeaders: true,
-  legacyHeaders: false,
-}); 
+// const loginRateLimiter = rateLimit({
+//   windowMs: 5 * 60 * 1000,       // 5 minutes
+//   max: 3,    
+//   skipSuccessfulRequests: true,   
+//   skipFailedRequests: false,     
+//   message: {
+//     status: 429,
+//     message: "Too many login attempts. Please try again later."
+//   },
+//   standardHeaders: true,
+//   legacyHeaders: false,
+// }); 
 //create organization
 router.post('/', checkAuth, accessHandle([1,5]),userController.createUser);
 //login  
-router.post('/login', loginRateLimiter,userController.login);
+router.post('/login', userController.login);
 //logout
 router.post('/logout', userController.logout);
 
