@@ -691,7 +691,7 @@ const getAllTickets = async (req, res) => {
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
-        WHERE 1 OR ticket_status = 'Re-assign'`;
+        WHERE 1 '`;
 
         let countQuery = `SELECT COUNT(DISTINCT t.ticket_id) AS total FROM tickets t
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
@@ -706,7 +706,7 @@ const getAllTickets = async (req, res) => {
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
-        WHERE 1 OR t.ticket_status = 'Re-assign'`;
+        WHERE 1 `;
 
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
@@ -738,8 +738,8 @@ const getAllTickets = async (req, res) => {
         // }
 
         if (user_id) {
-            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) `;
-            countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
+            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR ticket_status = 'Re-assign `;
+            countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR ticket_status = 'Re-assign`;
         }
 
         if (assigned_to) {
