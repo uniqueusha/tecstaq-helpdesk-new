@@ -446,8 +446,7 @@ const createTicket = async (req, res)=>{
     }
     }
     } catch (error) {
-        console.log(error);
-        
+       
         await connection.rollback();
         return error500(error, res);
     } finally{
@@ -533,7 +532,7 @@ const updateTicket = async (req, res) => {
         // const updateTicketAttachmentQuery = "UPDATE ticket_attachments SET ticket_id = ?, ticket_conversation_id = ?, file_path = ?  WHERE ticket_id = ?";
         // const updateTicketAttachmentResult = await connection.query(updateTicketAttachmentQuery,[ticketId, ticket_conversation_id, dbFilePath,  ticketId]);
         const insertTicketAttachmentQuery = "INSERT INTO ticket_attachments (ticket_id, ticket_conversation_id, file_path, uploaded_by)VALUES(?, ?, ?, ?)";
-        const insertTicketAttachmentResult = await connection.query(insertTicketAttachmentQuery,[ticket_id, ticket_conversation_id, dbFilePath, user_id]);
+        const insertTicketAttachmentResult = await connection.query(insertTicketAttachmentQuery,[ticketId, ticket_conversation_id, dbFilePath, user_id]);
 
         const updateTicketAssignedQuery = "UPDATE ticket_assignments SET ticket_id = ?, assigned_to = ?, assigned_at = ?, remarks = ? WHERE ticket_id = ?";
         const updateTicketAssignedResult = await connection.query(updateTicketAssignedQuery,[ticketId, assigned_to, assigned_at, remarks, ticketId]);
@@ -692,7 +691,7 @@ const getAllTickets = async (req, res) => {
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
-        WHERE 1 `;
+        WHERE 1 AND ticket_status = 'Re-assign'`;
 
         let countQuery = `SELECT COUNT(DISTINCT t.ticket_id) AS total FROM tickets t
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
@@ -707,7 +706,7 @@ const getAllTickets = async (req, res) => {
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
-        WHERE 1`;
+        WHERE 1 AND t.ticket_status = 'Re-assign'`;
 
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
@@ -1244,7 +1243,7 @@ const getTicketDownload = async (req, res) => {
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
-        WHERE 1 `;
+        WHERE 1 AND t.ticket_status = 'Re-assign'`;
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
             getTicketQuery += ` AND (LOWER(u1.user_name) LIKE '%${lowercaseKey}%' OR LOWER(t.subject) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%' OR LOWER(c.customer_name) LIKE '%${lowercaseKey}%')`;
@@ -1446,7 +1445,7 @@ const getAllTicketReports = async (req, res) => {
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
-        WHERE 1 `;
+        WHERE 1 AND t.ticket_status = 'Re-assign' `;
 
         let countQuery = `SELECT COUNT(DISTINCT t.ticket_id) AS total FROM tickets t
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
@@ -1461,7 +1460,7 @@ const getAllTicketReports = async (req, res) => {
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id   
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
-        WHERE 1`;
+        WHERE 1 AND t.ticket_status = 'Re-assign'`;
 
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
@@ -1602,7 +1601,7 @@ const getTicketReportsDownload = async (req, res) => {
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
-        WHERE 1 `;
+        WHERE 1 AND t.ticket_status = 'Re-assign'`;
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
             getTicketReportsQuery += ` AND (LOWER(u1.user_name) LIKE '%${lowercaseKey}%' OR LOWER(t.subject) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%')`;
