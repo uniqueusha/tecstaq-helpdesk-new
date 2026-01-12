@@ -766,6 +766,9 @@ const getAllTickets = async (req, res) => {
             getTicketsQuery += ` AND LOWER(t.ticket_status) = LOWER('${ticket_status}')`;
             countQuery += ` AND LOWER(t.ticket_status) = LOWER('${ticket_status}')`;
         } 
+
+        getTicketsQuery += " GROUP BY t.ticket_id";
+
         getTicketsQuery += " ORDER BY t.created_at DESC";
 
         // Apply pagination if both page and perPage are provided
@@ -965,7 +968,7 @@ const getTicketStatusCount = async (req, res) => {
 
         const [statusCountResult] = await connection.query(statusCountQuery);
 
-        const defaultStatuses = ["Open", "In Progress", "On Hold", "Resolved", "Closed"];
+        const defaultStatuses = ["Open", "In Progress", "On Hold", "Accepted", "Closed"];
 
         const ticket_status_counts = defaultStatuses.map(status => {
             const found = statusCountResult.find(
@@ -1254,7 +1257,7 @@ const getTicketDownload = async (req, res) => {
         }
 
         if (user_id) {
-            getTicketQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
+            getTicketQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign'`;
         }
 
         if (assigned_to) {
@@ -1280,6 +1283,7 @@ const getTicketDownload = async (req, res) => {
         if (customer_id) {
             getTicketQuery += ` AND t.customer_id = ${customer_id} `;
         }
+        getTicketQuery += " GROUP BY t.ticket_id";
         getTicketQuery += " ORDER BY tc.cts DESC";
 
         let result = await connection.query(getTicketQuery);
@@ -1491,8 +1495,8 @@ const getAllTicketReports = async (req, res) => {
         //     countQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR ca.user_id = ${user_id})`;
         // }
         if (user_id) {
-            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
-            countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
+            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign' `;
+            countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign' `;
         }
         
 
@@ -1520,6 +1524,7 @@ const getAllTicketReports = async (req, res) => {
             getTicketsQuery += ` AND LOWER(t.ticket_status) = LOWER('${ticket_status}')`;
             countQuery += ` AND LOWER(t.ticket_status) = LOWER('${ticket_status}')`;
         } 
+        getTicketsQuery += " GROUP BY t.ticket_id";
         getTicketsQuery += " ORDER BY t.created_at DESC";
 
         // Apply pagination if both page and perPage are provided
@@ -1612,7 +1617,7 @@ const getTicketReportsDownload = async (req, res) => {
         }
 
         if (user_id) {
-            getTicketReportsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
+            getTicketReportsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign' `;
         }
 
         if (assigned_to) {
@@ -1638,6 +1643,8 @@ const getTicketReportsDownload = async (req, res) => {
         if (customer_id) {
             getTicketReportsQuery += ` AND t.customer_id = ${customer_id} `;
         }
+
+        getTicketReportsQuery += " GROUP BY t.ticket_id";
         getTicketReportsQuery += " ORDER BY tc.cts DESC";
 
         let result = await connection.query(getTicketReportsQuery);
