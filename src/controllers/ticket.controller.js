@@ -247,7 +247,7 @@ const createTicket = async (req, res)=>{
     const ticket_status = req.body.ticket_status ? req.body.ticket_status.trim() : null;
     const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
     const ticket_conversation_id = req.body.ticket_conversation_id ? req.body.ticket_conversation_id : null;
-    const base64PDF = req.body.file_path ? req.body.file_path.trim() :'null';
+    const base64PDF = req.body.file_path ? req.body.file_path.trim() :null;
     const assigned_to = req.body.assigned_to ? req.body.assigned_to : null;
     // const remark = req.body.remark ? req.body.remark.trim() :'';
     // const assigned_at = req.body.assigned_at ? req.body.assigned_at : '';
@@ -315,24 +315,25 @@ const createTicket = async (req, res)=>{
         const insertTicketQuery = "INSERT INTO tickets (ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, service_id, description, ticket_status, closed_at)VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
         const insertTicketResult = await connection.query(insertTicketQuery,[ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, service_id, description, ticket_status, closed_at]);
         const ticket_id = insertTicketResult[0].insertId
+        
+        if (base64PDF) {
+        const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
+        const pdfBuffer = Buffer.from(cleanedBase64, "base64");
 
-      const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
-const pdfBuffer = Buffer.from(cleanedBase64, "base64");
+        const uploadsDir = path.join(__dirname, "..", "..", "uploads");
+        if (!fs.existsSync(uploadsDir)) {
+            fs.mkdirSync(uploadsDir, { recursive: true });
+        }
 
-const uploadsDir = path.join(__dirname, "..", "..", "uploads");
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
+        const fileName = `ticket_${ticket_id}_${Date.now()}.pdf`;
+        const filePath = path.join(uploadsDir, fileName);
 
-const fileName = `ticket_${ticket_id}_${Date.now()}.pdf`;
-const filePath = path.join(uploadsDir, fileName);
+        fs.writeFileSync(filePath, pdfBuffer);
 
-fs.writeFileSync(filePath, pdfBuffer);
-
-const dbFilePath = `uploads/${fileName}`;
+        const dbFilePath = `uploads/${fileName}`;
         const insertTicketAttachmentQuery = "INSERT INTO ticket_attachments (ticket_id, ticket_conversation_id, file_path, uploaded_by)VALUES(?, ?, ?, ?)";
         const insertTicketAttachmentResult = await connection.query(insertTicketAttachmentQuery,[ticket_id, ticket_conversation_id, dbFilePath, user_id]);
-
+    }
         const insertTicketAssignedQuery = "INSERT INTO ticket_assignments (ticket_id, assigned_to, assigned_by, remarks)VALUES(?, ?, ?, ?)";
         const insertTicketAssignedResult = await connection.query(insertTicketAssignedQuery,[ticket_id, assigned_to, user_id,  remarks]);
 
