@@ -1297,11 +1297,13 @@ const getTicketDownload = async (req, res) => {
         ticket = ticket.map((item, index) => ({
             "Sr No": index + 1,
             "Create Date": item.created_at,
+            "Updated Date": item.updated_at,
+            "Company": item.company_name,
+            "Created By": item.user_name,
             "Assigned To":item.assigned_to_name,
             "Ticket No": item.ticket_no,
             "Subject": item.subject,
             "Category": item.name,
-            "User Name": item.user_name,
             "Ticket Status": item.ticket_status
 
             // "Status": item.status === 1 ? "activated" : "deactivated",
@@ -1658,11 +1660,13 @@ const getTicketReportsDownload = async (req, res) => {
         ticketReports = ticketReports.map((item, index) => ({
             "Sr No": index + 1,
             "Create Date": item.created_at,
+            "Updated Date": item.updated_at,
+            "Company": item.company_name,
+            "Created By": item.user_name,
             "Assigned To":item.assigned_to_name,
             "Ticket No": item.ticket_no,
             "Subject": item.subject,
             "Category": item.name,
-            "User Name": item.user_name,
             "Ticket Status": item.ticket_status
 
             // "Status": item.status === 1 ? "activated" : "deactivated",
