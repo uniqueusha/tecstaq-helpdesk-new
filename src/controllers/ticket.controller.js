@@ -1496,6 +1496,7 @@ const getAllTicketReports = async (req, res) => {
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id   
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
+        LEFT JOIN ticket_status_history ts ON ts.ticket_id = t.ticket_id
         WHERE 1`;
 
         if (key) {
