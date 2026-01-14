@@ -1581,16 +1581,27 @@ const getAllTicketReports = async (req, res) => {
             if (ticket_status) {
                 tecketStatusQuery += ` AND ts.changed_by = '${ticket_status}'`;
             }
-            if (assigned_to) {
-                tecketStatusQuery += ` AND ts.changed_by = '${assigned_to}'`;
-            }
-
             tecketStatusQuery += ` ORDER BY ts.cts DESC`;
 
             const tecketStatusResult = await connection.query(tecketStatusQuery);
             tickets[i]['ticketStatus'] = tecketStatusResult[0];
         }
 
+        // Fetch ticket assigned
+        for (let i = 0; i < tickets.length; i++) {
+            const element = tickets[i];
+            let tecketAssignedQuery = `SELECT ta.*
+                FROM ticket_assignments ta
+                WHERE ta.ticket_id = ${element.ticket_id} `;
+
+            if (user_id) {
+                tecketAssignedQuery += ` AND ta.assigned_to = '${user_id}'`;
+            }
+            tecketAssignedQuery += ` ORDER BY ta.cts DESC`;
+
+            const tecketAssignedResult = await connection.query(tecketAssignedQuery);
+            tickets[i]['ticketAssigned'] = tecketAssignedResult[0];
+        }
         // Commit the transaction
         await connection.commit();
         const data = {
