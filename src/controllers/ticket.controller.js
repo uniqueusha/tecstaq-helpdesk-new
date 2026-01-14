@@ -1455,7 +1455,7 @@ const getStatusList = async (req, res) => {
 
 //all tickets Report list
 const getAllTicketReports = async (req, res) => {
-    const { page, perPage, key, user_id, department_id, ticket_category_id, assigned_to, fromDate, toDate, ticket_status, priority_id, customer_id } = req.query;
+    const { page, perPage, key, user_id, employee_id, department_id, ticket_category_id, assigned_to, fromDate, toDate, ticket_status, priority_id, customer_id } = req.query;
 
     // attempt to obtain a database connection
     let connection = await getConnection();
@@ -1480,6 +1480,7 @@ const getAllTicketReports = async (req, res) => {
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
+        LEFT JOIN ticket_status_history ts ON ts.ticket_id = t.ticket_id
         WHERE 1 `;
 
         let countQuery = `SELECT COUNT(DISTINCT t.ticket_id) AS total FROM tickets t
@@ -1521,14 +1522,19 @@ const getAllTicketReports = async (req, res) => {
             countQuery += ` AND (t.customer_id = ${customer_id} OR s.customer_id = ${customer_id}) `;
         }
 
-        // if (user_id) {
-        //     getTicketsQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR ca.user_id = ${user_id})`;
-        //     countQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR ca.user_id = ${user_id})`;
-        // }
         if (user_id) {
-            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign' `;
-            countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign' `;
+            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR ts.changed_by = ${user_id}) OR t.ticket_status = 'Re-assign' `;
+            countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR ts.changed_by = ${user_id}) OR t.ticket_status = 'Re-assign'  `;
         }
+
+        //  if (user_id) {
+        //     getTicketsQuery += ` AND (ca.user_id = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign' `;
+        //     countQuery += ` AND (ca.user_id = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign' `;
+        // }
+        // if (assigned_to) {
+        //      getTicketsQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${assigned_to})`;
+        //      countQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = ${assigned_to})`;
+        // }
         
 
         if (assigned_to) {
@@ -1579,8 +1585,9 @@ const getAllTicketReports = async (req, res) => {
                 WHERE ts.ticket_id = ${element.ticket_id} `;
 
             if (ticket_status) {
-                tecketStatusQuery += ` AND ts.changed_by = '${ticket_status}'`;
+                tecketStatusQuery += ` AND ts.new_status = '${ticket_status}'`;
             }
+           
             tecketStatusQuery += ` ORDER BY ts.cts DESC`;
 
             const tecketStatusResult = await connection.query(tecketStatusQuery);
@@ -1589,14 +1596,14 @@ const getAllTicketReports = async (req, res) => {
 
         // Fetch ticket assigned
         for (let i = 0; i < tickets.length; i++) {
-            const element = tickets[i];
+            const elements = tickets[i];
             let tecketAssignedQuery = `SELECT ta.*
                 FROM ticket_assignments ta
-                WHERE ta.ticket_id = ${element.ticket_id} `;
+                WHERE ta.ticket_id = ${elements.ticket_id} `;
 
-            if (user_id) {
-                tecketAssignedQuery += ` AND ta.assigned_to = '${user_id}'`;
-            }
+            // if (employee_id) {
+            //     tecketAssignedQuery += ` AND ta.assigned_to = '${employee_id}'`;
+            // }
             tecketAssignedQuery += ` ORDER BY ta.cts DESC`;
 
             const tecketAssignedResult = await connection.query(tecketAssignedQuery);
@@ -1621,6 +1628,8 @@ const getAllTicketReports = async (req, res) => {
 
         return res.status(200).json(data);
     } catch (error) {
+        console.log(error);
+        
         return error500(error, res);
     } finally {
         if (connection) connection.release()
