@@ -316,17 +316,44 @@ const createTicket = async (req, res)=>{
         const insertTicketResult = await connection.query(insertTicketQuery,[ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, service_id, description, ticket_status, closed_at]);
         const ticket_id = insertTicketResult[0].insertId
         
+    //     if (base64PDF) {
+    //     const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
+    //     const pdfBuffer = Buffer.from(cleanedBase64, "base64");
+
+    //     const uploadsDir = path.join(__dirname, "..", "..", "uploads");
+    //     if (!fs.existsSync(uploadsDir)) {
+    //         fs.mkdirSync(uploadsDir, { recursive: true });
+    //     }
+
+    //     const fileName = `ticket_${ticket_id}_${Date.now()}.pdf`;
+    //     const filePath = path.join(uploadsDir, fileName);
+
+    //     fs.writeFileSync(filePath, pdfBuffer);
+
+    //     const dbFilePath = `uploads/${fileName}`;
+    //     const insertTicketAttachmentQuery = "INSERT INTO ticket_attachments (ticket_id, ticket_conversation_id, file_path, uploaded_by)VALUES(?, ?, ?, ?)";
+    //     const insertTicketAttachmentResult = await connection.query(insertTicketAttachmentQuery,[ticket_id, ticket_conversation_id, dbFilePath, user_id]);
+    // }
         if (base64PDF) {
         const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
-        const pdfBuffer = Buffer.from(cleanedBase64, "base64");
+         const pdfBuffer = Buffer.from(cleanedBase64, "base64");
 
-        const uploadsDir = path.join(__dirname, "..", "..", "uploads");
-        if (!fs.existsSync(uploadsDir)) {
-            fs.mkdirSync(uploadsDir, { recursive: true });
-        }
+        const fileType = await import('file-type');
+        const fileTypeResult = await fileType.fileTypeFromBuffer(pdfBuffer);
 
-        const fileName = `ticket_${ticket_id}_${Date.now()}.pdf`;
-        const filePath = path.join(uploadsDir, fileName);
+        const allowedMimeTypes = [
+          'application/pdf',
+          'image/jpg',
+          'image/png'
+        ];
+
+        // if (pdfBuffer.length > 10 * 1024 * 1024) {
+        //   await connection.query("ROLLBACK");
+        //   return error422("File size must be under 10MB", res);
+        // }
+
+        const fileName = `ticket_${ticket_id}_${Date.now()}.${fileTypeResult.ext}`;
+        const filePath = path.join(__dirname, "..", "..", "uploads", fileName);
 
         fs.writeFileSync(filePath, pdfBuffer);
 
@@ -334,6 +361,7 @@ const createTicket = async (req, res)=>{
         const insertTicketAttachmentQuery = "INSERT INTO ticket_attachments (ticket_id, ticket_conversation_id, file_path, uploaded_by)VALUES(?, ?, ?, ?)";
         const insertTicketAttachmentResult = await connection.query(insertTicketAttachmentQuery,[ticket_id, ticket_conversation_id, dbFilePath, user_id]);
     }
+
         const insertTicketAssignedQuery = "INSERT INTO ticket_assignments (ticket_id, assigned_to, assigned_by, remarks)VALUES(?, ?, ?, ?)";
         const insertTicketAssignedResult = await connection.query(insertTicketAssignedQuery,[ticket_id, assigned_to, user_id,  remarks]);
 
@@ -1551,7 +1579,10 @@ const getAllTicketReports = async (req, res) => {
                 WHERE ts.ticket_id = ${element.ticket_id} `;
 
             if (ticket_status) {
-                tecketStatusQuery += ` AND ts.new_status = '${ticket_status}'`;
+                tecketStatusQuery += ` AND ts.changed_by = '${ticket_status}'`;
+            }
+            if (assigned_to) {
+                tecketStatusQuery += ` AND ts.changed_by = '${assigned_to}'`;
             }
 
             tecketStatusQuery += ` ORDER BY ts.cts DESC`;
