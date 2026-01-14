@@ -1629,8 +1629,6 @@ const getAllTicketReports = async (req, res) => {
 
         return res.status(200).json(data);
     } catch (error) {
-        console.log(error);
-        
         return error500(error, res);
     } finally {
         if (connection) connection.release()
@@ -1661,6 +1659,7 @@ const getTicketReportsDownload = async (req, res) => {
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = u.user_id
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
+        LEFT JOIN ticket_status_history ts ON ts.ticket_id = t.ticket_id
         WHERE 1 `;
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
@@ -1672,7 +1671,7 @@ const getTicketReportsDownload = async (req, res) => {
         }
 
         if (user_id) {
-            getTicketReportsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign' `;
+            getTicketReportsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR ts.changed_by = ${user_id}) OR t.ticket_status = 'Re-assign' `;
         }
 
         if (assigned_to) {
