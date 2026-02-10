@@ -437,19 +437,22 @@ const getUsers = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        let getUserQuery = `SELECT u.*,c.customer_id, d.department_name, r.role_name 
+        let getUserQuery = `SELECT DISTINCT u. user_id ,c.customer_id, d.department_name, r.role_name, u1.user_name, u1.email_id, s.phone_number
         FROM users u 
         LEFT JOIN departments d ON d.department_id = u.department_id
         LEFT JOIN roles r ON r.role_id = u.role_id
-        LEFT JOIN signup s ON s.user_id = u.user_id
-        LEFT JOIN customers c ON c.customer_id = s.customer_id
+        LEFT JOIN customers c ON c.user_id = u.user_id
+        LEFT JOIN signup s ON s.customer_id = c.customer_id
+        LEFT JOIN users u1 ON u1.user_id = s.user_id
+       
         WHERE 1 `;
 
         let countQuery = `SELECT COUNT(*) AS total FROM users u 
         LEFT JOIN departments d ON d.department_id = u.department_id
         LEFT JOIN roles r ON r.role_id = u.role_id
-        LEFT JOIN signup s ON s.user_id = u.user_id
-        LEFT JOIN customers c ON c.customer_id = s.customer_id
+        LEFT JOIN customers c ON c.user_id = u.user_id
+        LEFT JOIN signup s ON s.customer_id = c.customer_id
+        LEFT JOIN users u1 ON u1.user_id = s.user_id
         WHERE 1 `;
 
         if (key) {
