@@ -298,6 +298,7 @@ const createUser = async (req, res) => {
     // Check if email_id exists
     const checkUserQuery = "SELECT * FROM users WHERE LOWER(TRIM(email_id)) = ? AND status = 1";
     const checkUserResult = await pool.query(checkUserQuery, [email_id.toLowerCase()]);
+    const userId = checkUserResult.user_id;
     if (checkUserResult[0].length > 0) {
         return error422('Email id is already exists.', res);
     }
@@ -369,7 +370,42 @@ const createUser = async (req, res) => {
             let insertServiceQuery = 'INSERT INTO customer_service (customer_id, service_id) VALUES (?, ?)';
             let insertServiceValues = [ customerid, service_id ];
             let insertServiceResult = await connection.query(insertServiceQuery, insertServiceValues);
+        } 
+        
+        if (customerRole.role_name === 'Customer') {
+        let customerAgentArray = customerAgent;
+            for (let i = 0; i < customerAgentArray.length; i++) {
+                const elements = customerAgentArray[i];
+                const department_id = elements.department_id ? elements.department_id : "";
+                const userId = elements.user_id ? elements.user_id: "";
+          
+                const insertAgentQuery = `INSERT INTO customer_agents (customer_id, department_id, user_id) VALUES (?, ?, ?)`;
+                const insertAgentValues = [ customerid, department_id, userId,];
+                const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
+            }
         }
+    } else if (checkUserResult[0].length > 0) {
+        const insertCustomerQuery = `INSERT INTO customers (customer_name, company_name, email_id, address, phone_number, domain, isSite, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
+            const insertCustomerValues = [ user_name, company_name, email_id, address, phone_number, domain, isSite, userId ];
+            const insertCustomerResult = await connection.query(insertCustomerQuery, insertCustomerValues);
+            const customerid = insertCustomerResult[0].insertId;
+
+        let serviceArray = serviceData
+        for (let i = 0; i < serviceArray.length; i++) {
+            const elements = serviceArray[i];
+            const service_id = elements.service_id ? elements.service_id : null;
+            
+            // Check if service_id exists
+            const serviceIdQuery = "SELECT * FROM services WHERE service_id = ? ";
+            const serviceIdResult = await connection.query(serviceIdQuery, [service_id]);
+            if (serviceIdResult[0].length == 0) {
+                return error422("Service Not Found.", res);
+            }
+
+            let insertServiceQuery = 'INSERT INTO customer_service (customer_id, service_id) VALUES (?, ?)';
+            let insertServiceValues = [ customerid, service_id ];
+            let insertServiceResult = await connection.query(insertServiceQuery, insertServiceValues);
+        } 
         
         if (customerRole.role_name === 'Customer') {
         let customerAgentArray = customerAgent;
@@ -531,8 +567,6 @@ const login = async (req, res) => {
             { expiresIn: "1h" }
         );
             
-
-            
         // Commit the transaction
         await connection.commit();
         return res.status(200).json({
@@ -544,8 +578,6 @@ const login = async (req, res) => {
         });
 
     } catch (error) {
-        console.log(error);
-        
         return error500(error, res)
     } finally {
         await connection.release();
@@ -2070,6 +2102,7 @@ const onStatusChangeCustomer = async (req, res) => {
         // Check if the customer exists
         const customerQuery = "SELECT * FROM customers WHERE customer_id = ? ";
         const customerResult = await connection.query(customerQuery, [customerId]);
+        const userId = customerResult.user_id;
 
         if (customerResult[0].length == 0) {
             return res.status(404).json({
@@ -2087,14 +2120,43 @@ const onStatusChangeCustomer = async (req, res) => {
         }
 
         // Soft update the customer
-        const updateQuery = `
+        const updateCustomerQuery = `
             UPDATE customers
             SET status = ?
             WHERE customer_id = ?
         `;
+        await connection.query(updateCustomerQuery, [status, customerId]);
 
-        await connection.query(updateQuery, [status, customerId]);
+        // Soft update the User
+        const updateUserQuery = `
+            UPDATE users
+            SET status = ?
+            WHERE user_id = ?
+        `;
+        await connection.query(updateUserQuery, [status, userId]);
+         
+        // Check if the user(employee) exists
+        const userQuery = "SELECT * FROM signup WHERE customer_id = ? ";
+        const userResult = await connection.query(userQuery, [customerId]);
+        const user_id = userResult.user_id;
+        
+        for (let i = 0; i < userResult.length; i++) {
 
+        // Soft update the signup
+        const updateSignupQuery = `
+            UPDATE signup
+            SET status = ?
+            WHERE user_id = ?
+        `;
+        await connection.query(updateSignupQuery, [status, user_id]);
+
+        const updateSignupUserQuery = `
+            UPDATE users
+            SET status = ?
+            WHERE user_id = ?
+        `;
+        await connection.query(updateSignupUserQuery, [status, user_id]);
+        }
         const statusMessage = status === 1 ? "activated" : "deactivated";
         // Commit the transaction
         await connection.commit();

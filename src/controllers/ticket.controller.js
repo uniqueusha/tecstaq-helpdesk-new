@@ -49,193 +49,6 @@ error404 = (message, res) => {
   });
 };
 
-//create ticket
-const createTicketold = async (req, res)=>{
-    const ticket_category_id = req.body.ticket_category_id ? req.body.ticket_category_id :'';
-    const priority_id = req.body.priority_id ? req.body.priority_id :'';
-    const department_id = req.body.department_id ? req.body.department_id :'';
-    const subject = req.body.subject ? req.body.subject.trim() :'';
-    const customer_id = req.body.customer_id ? req.body.customer_id :'';
-    const service_id = req.body.service_id ? req.body.service_id : '';
-    const description = req.body.description ? req.body.description.trim() :'';
-    const ticket_status = req.body.ticket_status ? req.body.ticket_status.trim() : null;
-    const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
-    const ticket_conversation_id = req.body.ticket_conversation_id ? req.body.ticket_conversation_id : null;
-    const base64PDF = req.body.file_path ? req.body.file_path.trim() :'';
-    const assigned_to = req.body.assigned_to ? req.body.assigned_to : null;
-    // const remark = req.body.remark ? req.body.remark.trim() :'';
-    // const assigned_at = req.body.assigned_at ? req.body.assigned_at : '';
-    const remarks = req.body.remarks ? req.body.remarks.trim() : null;
-    // const message = req.body.message ? req.body.message.trim() :'';
-    const old_status = req.body.old_status ? req.body.old_status : null;
-    const new_status = req.body.new_status ? req.body.new_status : '';
-    const user_id = req.companyData.user_id;
-
-    if (!subject) {
-        return error422("Subject is required.", res);
-    }  
-
-    let connection = await getConnection();
-
-    try {
-        // start the transaction
-        await connection.beginTransaction();
-        const [rows] = await connection.query(`
-            SELECT ticket_no 
-            FROM tickets 
-            ORDER BY ticket_id DESC 
-            LIMIT 1
-        `);
-
-        let ticket_no = 'TCK-1'; // default first ticket number
-
-        if (rows.length > 0) {
-            const lastTicketNo = rows[0].ticket_no; // e.g., "TCK-12"
-            const lastNumber = parseInt(lastTicketNo.split('-')[1], 10);
-            ticket_no = `TCK-${lastNumber + 1}`;
-        }
-
-        const closedAtQuery = `SELECT * FROM ticket_status_history WHERE LOWER(TRIM(new_status)) = "close" `;
-        const closedAtResult = await pool.query(closedAtQuery);
-        const closed_at = closedAtResult[0].cts;
-
-        const insertTicketQuery = "INSERT INTO tickets (ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, service_id, description, ticket_status, closed_at)VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        const insertTicketResult = await connection.query(insertTicketQuery,[ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, service_id, description, ticket_status, closed_at]);
-        const ticket_id = insertTicketResult[0].insertId
-
-       const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
-       const pdfBuffer = Buffer.from(cleanedBase64, "base64");
-
-const uploadsDir = path.join(__dirname, "..", "..", "uploads");
-if (!fs.existsSync(uploadsDir)) {
-    fs.mkdirSync(uploadsDir, { recursive: true });
-}
-
-const fileName = `ticket_${ticket_id}_${Date.now()}.pdf`;
-const filePath = path.join(uploadsDir, fileName);
-
-fs.writeFileSync(filePath, pdfBuffer);
-
-const dbFilePath = `uploads/${fileName}`;
-        const insertTicketAttachmentQuery = "INSERT INTO ticket_attachments (ticket_id, ticket_conversation_id, file_path, uploaded_by)VALUES(?, ?, ?, ?)";
-        const insertTicketAttachmentResult = await connection.query(insertTicketAttachmentQuery,[ticket_id, ticket_conversation_id, dbFilePath, user_id]);
-
-        // //assigned
-        // const assignedQuery = "SELECT * FROM users WHERE user_id = ? ";
-        // const assignedResult = await pool.query(assignedQuery, [assigned_to]);
-        // if (assignedResult[0].length == 0) {
-        //   return error422("User Not Found.", res);
-        // }
-        
-        const insertTicketAssignedQuery = "INSERT INTO ticket_assignments (ticket_id, assigned_to, assigned_by, remarks)VALUES(?, ?, ?, ?)";
-        const insertTicketAssignedResult = await connection.query(insertTicketAssignedQuery,[ticket_id, assigned_to, user_id,  remarks]);
-
-        let insertTicketStatusHistoryQuery = 'INSERT INTO  ticket_conversations(ticket_id, sender_id, message) VALUES (?, ?, ?)';
-        let insertTicketStatusHistoryValues = [ ticket_id, user_id, description ];
-        let insertTicketStatusHistoryResult = await connection.query(insertTicketStatusHistoryQuery, insertTicketStatusHistoryValues);
-
-      
-        let insertTicketConversationQuery = 'INSERT INTO ticket_status_history (ticket_id, old_status, new_status, changed_by, remarks) VALUES (?, ?, ?, ?, ?)';
-        let insertTicketConversationValues = [ ticket_id, old_status, ticket_status, user_id, remarks];
-        let insertTicketConversationResult = await connection.query(insertTicketConversationQuery, insertTicketConversationValues);
-        
-    
-        await connection.commit()
-        // return res.status(200).json({
-        //     status:200,
-        //     message:"Ticket created successfully."
-        // })
-
-        const userDataQuery = `SELECT user_name, email_id FROM users WHERE user_id = ?`;
-        const [userDataResult] = await connection.query(userDataQuery,[user_id]);
-        
-
-        const createdAtQuery = `SELECT created_at FROM tickets WHERE user_id = ?`;
-        const [createdAtResult] = await connection.query(createdAtQuery,[user_id]);
-        
-        const userAssignedDataQuery = `SELECT user_name, email_id FROM users WHERE user_id = ?`;
-        const [userAssignedDataResult] = await connection.query(userAssignedDataQuery,[assigned_to]);
-        
-        const categoryDataQuery = `SELECT name FROM ticket_categories WHERE ticket_category_id = ?`;
-        const [categoryDataResult] = await connection.query(categoryDataQuery,[ticket_category_id]);
-
-        const priorityDataQuery = `SELECT name FROM priorities WHERE priority_id = ?`;
-        const [priorityDataResult] = await connection.query(priorityDataQuery,[priority_id]);
-
-        const created_user_name = userDataResult[0].user_name;
-        const created_email_id = userDataResult[0].email_id;
-        const category_name = categoryDataResult[0].name;
-        const priority_name = priorityDataResult[0].name;
-        const assigned_user_name = userAssignedDataResult.user_name || null;
-        const email_id = userAssignedDataResult.email_id || null;
-        const created_at = createdAtResult[0].created_at.toISOString().split('T')[0];
-
-        const message = `
-      <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <title>Welcome to test</title>
-          <style>
-              div{
-              font-family: Arial, sans-serif; 
-               margin: 0px;
-                padding: 0px;
-                color:black;
-              }
-          </style>
-        </head>
-        <body>
-        <div>
-       <h2 style="text-transform: capitalize;">Hi ${created_user_name},</h2>
-        <p>Your support ticket has been successfully created. Our team will review it shortly and get back to you as soon as possible.</p>
-        </p>Here are the details of your ticket:</p>
-        <p>Ticket No: ${ticket_no}</p>
-        <p>Subject: ${subject}</P>
-        <p>Category: ${category_name}</p>
-        <p>Priority: ${priority_name}</p>
-        <p>Description: ${description}</p>
-        <p>Created By: ${created_user_name}</p>
-        <p>Status: Open</p>
-        <p>Created On: ${created_at}</p>
-        <p>Thank you for reaching out to us.</p>
-          <p>We appreciate your patience and will resolve your query promptly.</p>
-          <p>Best regards,</p>
-          <p><strong>Tecstaq Support</strong></p>
-          <a href="suppprt@dani.com">suppprt@dani.com</a>
-
-        </div>
-        </body>
-        </html>`;
-
-        // Prepare the email message options.
-        const mailOptions = {
-            from: "support@tecstaq.com", // Sender address from environment variables.
-            to: [created_email_id, email_id], // Recipient's name and email address."sushantsjamdade@gmail.com",
-            bcc: ["sushantsjamdade@gmail.com"],
-            subject: `Ticket ${ticket_no} Created Successfully`,
-            html: message,
-        };
-        try {
-      await transporter.sendMail(mailOptions);
-      return res.status(200).json({
-        status: 200,
-        message: `Ticket created successfully.`,
-      });
-    } catch (emailError) {
-      return res.status(200).json({
-        status: 200,
-        message: "Ticket created successfully, but failed to send email.",
-      });
-    }
-    } catch (error) {
-        await connection.rollback();
-        return error500(error, res);
-    } finally{
-        if (connection) connection.release();
-    }
-}
-
 const createTicket = async (req, res)=>{
     const ticket_category_id = req.body.ticket_category_id ? req.body.ticket_category_id :'';
     const priority_id = req.body.priority_id ? req.body.priority_id :'';
@@ -336,7 +149,7 @@ const createTicket = async (req, res)=>{
     // }
         if (base64PDF) {
         const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
-         const pdfBuffer = Buffer.from(cleanedBase64, "base64");
+        const pdfBuffer = Buffer.from(cleanedBase64, "base64");
 
         const fileType = await import('file-type');
         const fileTypeResult = await fileType.fileTypeFromBuffer(pdfBuffer);
@@ -379,7 +192,6 @@ const createTicket = async (req, res)=>{
         LEFT JOIN customer_agents ca ON ca.user_id = u.user_id
         WHERE u.role_id = 2 AND u.status = 1 AND ca.customer_id = ${customer_id}`;
         const [userResult] = await connection.query(userQuery);
-
 
         for (let i = 0; i < userResult.length; i++) {
             const element = userResult[i];
