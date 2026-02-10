@@ -437,19 +437,19 @@ const getUsers = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        let getUserQuery = `SELECT u.*,s.customer_id, d.department_name, r.role_name 
+        let getUserQuery = `SELECT u.*,c.customer_id, d.department_name, r.role_name 
         FROM users u 
         LEFT JOIN departments d ON d.department_id = u.department_id
         LEFT JOIN roles r ON r.role_id = u.role_id
         LEFT JOIN signup s ON s.user_id = u.user_id
+        LEFT JOIN customers c ON c.customer_id = s.customer_id
         WHERE 1 `;
 
         let countQuery = `SELECT COUNT(*) AS total FROM users u 
-        LEFT JOIN departments d
-        ON d.department_id = u.department_id
-        LEFT JOIN roles r
-        ON r.role_id = u.role_id
+        LEFT JOIN departments d ON d.department_id = u.department_id
+        LEFT JOIN roles r ON r.role_id = u.role_id
         LEFT JOIN signup s ON s.user_id = u.user_id
+        LEFT JOIN customers c ON c.customer_id = s.customer_id
         WHERE 1 `;
 
         if (key) {
