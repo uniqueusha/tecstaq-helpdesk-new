@@ -533,7 +533,7 @@ const getUser = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        let userQuery = `SELECT u.*, d.department_name, r.role_name, c.company_name 
+        let userQuery = `SELECT u.*, d.department_name, r.role_name, s.customer_id, c.company_name 
         FROM users u 
         LEFT JOIN departments d ON d.department_id = u.department_id
         LEFT JOIN roles r ON r.role_id = u.role_id
