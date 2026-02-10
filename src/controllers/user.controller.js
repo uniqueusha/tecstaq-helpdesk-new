@@ -224,7 +224,7 @@ const createUser = async (req, res) => {
                 const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
             }
         }
-    } else if (checkUserResult[0].length > 0) {
+    } else if (checkUserResult.length > 0) {
         const insertCustomerQuery = `INSERT INTO customers (customer_name, company_name, email_id, address, phone_number, domain, isSite, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
             const insertCustomerValues = [ user_name, company_name, email_id, address, phone_number, domain, isSite, userId ];
             const insertCustomerResult = await connection.query(insertCustomerQuery, insertCustomerValues);
@@ -328,236 +328,6 @@ const createUser = async (req, res) => {
     }
 };
 
-//create user
-const createCustomer = async (req, res) => {
-  const user_name = req.body.user_name ? req.body.user_name.trim() : "";
-  const email_id = req.body.email_id ? req.body.email_id.trim() : "";
-  const phone_number = req.body.phone_number ? req.body.phone_number : null;
-  const role_id = req.body.role_id ? req.body.role_id : 0;
-  const department_id = req.body.department_id ? req.body.department_id : 0;
-//   const customer_name = req.body.customer_name ? req.body.customer_name.trim() : "";
-  const company_name = req.body.company_name ? req.body.company_name.trim() : "";
-  const address = req.body.address ? req.body.address.trim() : "";
-  const domain = req.body.domain ? req.body.domain.trim() : "";
-    const customer_id = req.body.customer_id ? req.body.customer_id : 0;
-
-  const service_id = req.body.service_id ? req.body.service_id : [];
-  const isSite = req.body.isSite ? req.body.isSite : '';
-  const serviceData = req.body.serviceData ? req.body.serviceData : [];
-  const customerAgent = req.body.customerAgent ? req.body.customerAgent :[];
-  const password = "123456";
-
-  if (!user_name) {
-    return error422("User name is required.", res);
-  } else if (!email_id) {
-    return error422("Email id is required.", res);
-  } else if (!phone_number) {
-    return error422("Phone number is required.", res);
-  }  else if (!role_id && role_id != 0) {
-    return error422("role_id is required.", res);
-  } else if (!department_id && department_id != 0) {
-    return error422("Department is required.", res);
-  }
-
-    // //check User Name already is exists or not
-    // const isExistUserNameQuery = `SELECT * FROM users WHERE LOWER(TRIM(user_name))= ?`;
-    // const isExistUserNameResult = await pool.query(isExistUserNameQuery, [user_name.toLowerCase()]);
-    // if (isExistUserNameResult[0].length > 0) {
-    //     return error422(" User Name is already exists.", res);
-    // }
-
-    // Check if email_id exists
-    const checkUserQuery = "SELECT * FROM users WHERE LOWER(TRIM(email_id)) = ? AND status = 1";
-    const checkUserResult = await pool.query(checkUserQuery, [email_id.toLowerCase()]);
-    const userId = checkUserResult.user_id;
-    // if (checkUserResult[0].length > 0) {
-    //     return error422('Email id is already exists.', res);
-    // }
-
-    // Check if phone_number exists
-    // const checkMobileNoQuery = "SELECT * FROM users WHERE phone_number = ? AND status = 1";
-    // const checkMobileNoResult = await pool.query(checkMobileNoQuery, [phone_number]);
-    // if (checkMobileNoResult[0].length > 0) {
-    //     return error422('Mobile No is already exists.', res);
-    // }
-    
-    // Attempt to obtain a database connection
-    let connection = await getConnection();
-    try {
-        //Start the transaction
-        await connection.beginTransaction();
-        //insert into user
-        const insertUserQuery = `INSERT INTO users (user_name, email_id, phone_number, role_id, department_id ) VALUES (?, ?, ?, ?, ?)`;
-        const insertUserValues = [ user_name, email_id, phone_number, role_id, department_id ];
-        const insertuserResult = await connection.query(insertUserQuery, insertUserValues);
-        const user_id = insertuserResult[0].insertId;
-
-        if(role_id == 3 && department_id == 0){
-        // Check if user exists
-        const userQuery = "SELECT * FROM customers WHERE customer_id  = ?";
-        const userResult = await connection.query(userQuery, [customer_id]);
-        const domains = userResult[0][0].domain;
-        //insert into sign up
-        const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain, customer_id, user_id) VALUES (?, ?, ?, ?, ?, ?)`;
-        const insertSignUpValues = [ user_name, email_id, phone_number, domains, customer_id, user_id ];
-        const insertSignUpResult = await connection.query(insertSignUpQuery, insertSignUpValues);
-        }
-        // let length = 8,
-        // charset ="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-        // password = "";
-        // for (let i = 0, n = charset.length; i < length; ++i) {
-        //     password += charset.charAt(Math.floor(Math.random() * n));
-        // }
-        const hash = await bcrypt.hash(password, 10); // Hash the password using bcrypt
-
-        //insert into Untitled
-        const insertUntitledQuery = "INSERT INTO untitled (user_id, extenstions) VALUES (?,?)";
-        const insertUntitledValues = [user_id, hash];
-        const untitledResult = await connection.query(insertUntitledQuery, insertUntitledValues)
-
-
-        //role-customer
-        const selectCustomerRoleQuery = `SELECT * FROM roles WHERE role_id = ?`
-        const selectResult = await connection.query(selectCustomerRoleQuery,[role_id]);
-        const customerRole = selectResult[0][0];
-        if(customerRole.role_name === 'Customer'){
-            const insertCustomerQuery = `INSERT INTO customers (customer_name, company_name, email_id, address, phone_number, domain, isSite, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-            const insertCustomerValues = [ user_name, company_name, email_id, address, phone_number, domain, isSite, user_id ];
-            const insertCustomerResult = await connection.query(insertCustomerQuery, insertCustomerValues);
-            const customerid = insertCustomerResult[0].insertId;
-
-        let serviceArray = serviceData
-        for (let i = 0; i < serviceArray.length; i++) {
-            const elements = serviceArray[i];
-            const service_id = elements.service_id ? elements.service_id : null;
-            
-            // Check if service_id exists
-            const serviceIdQuery = "SELECT * FROM services WHERE service_id = ? ";
-            const serviceIdResult = await connection.query(serviceIdQuery, [service_id]);
-            if (serviceIdResult[0].length == 0) {
-                return error422("Service Not Found.", res);
-            }
-
-            let insertServiceQuery = 'INSERT INTO customer_service (customer_id, service_id) VALUES (?, ?)';
-            let insertServiceValues = [ customerid, service_id ];
-            let insertServiceResult = await connection.query(insertServiceQuery, insertServiceValues);
-        } 
-        
-        if (customerRole.role_name === 'Customer') {
-        let customerAgentArray = customerAgent;
-            for (let i = 0; i < customerAgentArray.length; i++) {
-                const elements = customerAgentArray[i];
-                const department_id = elements.department_id ? elements.department_id : "";
-                const userId = elements.user_id ? elements.user_id: "";
-          
-                const insertAgentQuery = `INSERT INTO customer_agents (customer_id, department_id, user_id) VALUES (?, ?, ?)`;
-                const insertAgentValues = [ customerid, department_id, userId,];
-                const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
-            }
-        }
-    } else if (checkUserResult[0].length > 0) {
-        const insertCustomerQuery = `INSERT INTO customers (customer_name, company_name, email_id, address, phone_number, domain, isSite, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-            const insertCustomerValues = [ user_name, company_name, email_id, address, phone_number, domain, isSite, userId ];
-            const insertCustomerResult = await connection.query(insertCustomerQuery, insertCustomerValues);
-            const customerid = insertCustomerResult[0].insertId;
-
-        let serviceArray = serviceData
-        for (let i = 0; i < serviceArray.length; i++) {
-            const elements = serviceArray[i];
-            const service_id = elements.service_id ? elements.service_id : null;
-            
-            // Check if service_id exists
-            const serviceIdQuery = "SELECT * FROM services WHERE service_id = ? ";
-            const serviceIdResult = await connection.query(serviceIdQuery, [service_id]);
-            if (serviceIdResult[0].length == 0) {
-                return error422("Service Not Found.", res);
-            }
-
-            let insertServiceQuery = 'INSERT INTO customer_service (customer_id, service_id) VALUES (?, ?)';
-            let insertServiceValues = [ customerid, service_id ];
-            let insertServiceResult = await connection.query(insertServiceQuery, insertServiceValues);
-        } 
-        
-        if (customerRole.role_name === 'Customer') {
-        let customerAgentArray = customerAgent;
-            for (let i = 0; i < customerAgentArray.length; i++) {
-                const elements = customerAgentArray[i];
-                const department_id = elements.department_id ? elements.department_id : "";
-                const userId = elements.user_id ? elements.user_id: "";
-          
-                const insertAgentQuery = `INSERT INTO customer_agents (customer_id, department_id, user_id) VALUES (?, ?, ?)`;
-                const insertAgentValues = [ customerid, department_id, userId,];
-                const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
-            }
-        }
-    }
-
-        //commit the transation
-        await connection.commit();
-
-        // try {
-        const message = `
-        <!DOCTYPE html>
-        <html lang="en">
-        <head>
-          <meta charset="UTF-8">
-          <title>Welcome to test</title>
-          <style>
-              div{
-              font-family: Arial, sans-serif; 
-               margin: 0px;
-                padding: 0px;
-                color:black;
-              }
-          </style>
-        </head>
-        <body>
-        <div>
-        <h2 style="text-transform: capitalize;">Hi ${user_name},</h2>
-        <h3>Welcome to Tecstaq!</h3>
-
-        <p>Your account has been successfully created. Here are your login details:</p>
-        <p>Email: ${email_id}</p>
-        <p>Temporary Password: ${password}</P>
-        <p>You can log in using the following link:
-          <a href="https://support.tecstaq.com/">https://support.tecstaq.com/</a></p>
-          <p>For security reasons, please change your password after your first login.</p>
-          <p>If you didn’t request this account or believe this was created in error, please contact our support team at support@tecstaq.com.</p>
-          <p>Thank you,</p>
-          <p><strong>Tecstaq Support</strong></p>
-
-        </div>
-        </body>
-        </html>`;
-
-        // Prepare the email message options.
-        const mailOptions = {
-            from: "support@tecstaq.com", // Sender address from environment variables.
-            to: `${email_id}`, // Recipient's name and email address."sushantsjamdade@gmail.com",
-            // bcc: ["sushantsjamdade@gmail.com"],
-            subject: "Welcome to Tecstaq HelpDesk Support! Your Account Has Been Created", // Subject line.
-            html: message,
-        };
-
-        try {
-        await transporter.sendMail(mailOptions);
-        return res.status(200).json({
-        status: 200,
-        message: `User created successfully.`,
-      });
-    } catch (emailError) {
-      return res.status(200).json({
-        status: 200,
-        message: "User created successfully, but failed to send email.",
-      });
-    }
-    } catch (error) {
-        await connection.rollback();
-        return error500(error, res);
-    } finally {
-        await connection.release();
-    }
-};
   
 //login
 const login = async (req, res) => {
@@ -763,12 +533,12 @@ const getUser = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        let userQuery = `SELECT u.*, d.department_name, r.role_name 
+        let userQuery = `SELECT u.*, d.department_name, r.role_name, c.company_name 
         FROM users u 
-        LEFT JOIN departments d
-        ON d.department_id = u.department_id
-        LEFT JOIN roles r
-        ON r.role_id = u.role_id
+        LEFT JOIN departments d ON d.department_id = u.department_id
+        LEFT JOIN roles r ON r.role_id = u.role_id
+        LEFT JOIN signup s ON s.user_id = u.user_id
+        LEFT JOIN customers c ON c.customer_id = s.customer_id
         WHERE 1 AND u.user_id = ? `;
         let userResult = await connection.query(userQuery, [userId]);
         if (userResult[0].length == 0) {
