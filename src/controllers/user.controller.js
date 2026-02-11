@@ -15,7 +15,7 @@ const transporter = nodemailer.createTransport({
     secure: false,
     auth: {
         user: "support@tecstaq.com",
-        pass: "Homeoffice@2025#$",
+        pass: "HelpMe@1212#$",
     },
     tls: {
         rejectUnauthorized: false,
@@ -339,8 +339,8 @@ const login = async (req, res) => {
   } else if (!password) {
     return error422("Password is required.", res);
   }
-  email_id = atob(email_id);
-  password = atob(password);
+//   email_id = atob(email_id);
+//   password = atob(password);
   // Attempt to obtain a database connection
   let connection = await getConnection();
   try {
@@ -438,7 +438,7 @@ const getUsers = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        let getUserQuery = `SELECT DISTINCT u. user_id ,c.customer_id, d.department_name, r.role_name, u1.user_name, u1.email_id, s.phone_number, s.cts, s.status
+        let getUserQuery = `SELECT DISTINCT u. user_id ,c.customer_id, d.department_name, r.role_name, u1.user_name, u1.email_id, s.customer_user_id s.phone_number, s.cts, s.status
         FROM users u 
         LEFT JOIN departments d ON d.department_id = u.department_id
         LEFT JOIN roles r ON r.role_id = u.role_id
@@ -480,8 +480,8 @@ const getUsers = async (req, res) => {
         }
 
         if (user_id) {
-            getUserQuery += ` AND u.user_id = ${user_id} `;
-            countQuery += ` AND u.user_id = ${user_id}  `;
+            getUserQuery += ` AND s.customer_user_id = ${user_id} `;
+            countQuery += ` AND s.customer_user_id = ${user_id}  `;
         }
         getUserQuery += " ORDER BY u.created_at DESC";
 
@@ -1539,7 +1539,7 @@ const signUp = async (req, res) => {
     try {
         //Start the transaction
         await connection.beginTransaction();
-
+        
         const domainCustomerQuery = ` SELECT * FROM customers WHERE LOWER(TRIM(domain)) = ?`;
         const domainCustomerResult = await connection.query(domainCustomerQuery, [domain.toLowerCase()]);
         const customer_user_id = domainCustomerResult[0][0].user_id;
@@ -1551,7 +1551,7 @@ const signUp = async (req, res) => {
         const user_id = insertuserResult[0].insertId;
         
         //insert into sign up
-        const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain, customer_id, user_id, cust_customer_id) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+        const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain, customer_id, user_id, customer_user_id) VALUES (?, ?, ?, ?, ?, ?, ?)`;
         const insertSignUpValues = [ user_name, email_id, phone_number, domain, customerId, user_id, customer_user_id ];
         const insertSignUpResult = await connection.query(insertSignUpQuery, insertSignUpValues);
         
@@ -1627,6 +1627,8 @@ const signUp = async (req, res) => {
       });
     }
     } catch (error) {
+        console.log("kii",error);
+        
         await connection.rollback();
         return error500(error, res);
     } finally {
@@ -1763,6 +1765,8 @@ const email_id = req.body.email_id ? req.body.email_id.trim() : "";
 
         })
     } catch (error) {
+        console.log(error);
+        
         return error500(error, res)
     } finally {
         if (connection) connection.release()
