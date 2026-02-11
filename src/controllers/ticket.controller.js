@@ -82,17 +82,17 @@ const createTicket = async (req, res)=>{
 
          //get customer id
     const isSignCustomerIDQuery = `SELECT * FROM signup WHERE user_id= ?`;
-    const isSignCustomerIDResult = await pool.query(isSignCustomerIDQuery, [user_id]);
+    const isSignCustomerIDResult = await connection.query(isSignCustomerIDQuery, [user_id]);
     const signCustomerExist = isSignCustomerIDResult[0];
 
      //get customer id
     const isCustomerQuery = `SELECT * FROM customers WHERE user_id= ?`;
-    const isCustomerResult = await pool.query(isCustomerQuery, [user_id]);
+    const isCustomerResult = await connection.query(isCustomerQuery, [user_id]);
     const customerExist = isCustomerResult[0];
     
     //get customer id
     const isCustomerAgentQuery = `SELECT * FROM customer_agents WHERE user_id= ?`;
-    const isCustomerAgentResult = await pool.query(isCustomerAgentQuery, [user_id]);
+    const isCustomerAgentResult = await connection.query(isCustomerAgentQuery, [user_id]);
     const customerAgentExist = isCustomerAgentResult[0];
 
     // let customer_id = "";
@@ -122,11 +122,16 @@ const createTicket = async (req, res)=>{
         }
 
         const closedAtQuery = `SELECT * FROM ticket_status_history WHERE LOWER(TRIM(new_status)) = "Closed" `;
-        const closedAtResult = await pool.query(closedAtQuery);
+        const closedAtResult = await connection.query(closedAtQuery);
         const closed_at = closedAtResult[0].cts;
 
-        const insertTicketQuery = "INSERT INTO tickets (ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, service_id, description, ticket_status, closed_at)VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
-        const insertTicketResult = await connection.query(insertTicketQuery,[ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, service_id, description, ticket_status, closed_at]);
+        const customerUserIdQuery = ` SELECT * FROM customers WHERE customer_id = ?`
+        const [customerUserIdResult] = await connection.query(customerUserIdQuery, [customer_id]);
+        const customer_user_id = customerUserIdResult[0].user_id;
+        
+        
+        const insertTicketQuery = "INSERT INTO tickets (ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, service_id, description, ticket_status, closed_at, customer_user_id)VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        const insertTicketResult = await connection.query(insertTicketQuery,[ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, service_id, description, ticket_status, closed_at, customer_user_id]);
         const ticket_id = insertTicketResult[0].insertId
         
     //     if (base64PDF) {
@@ -579,12 +584,12 @@ const getAllTickets = async (req, res) => {
         // }
    
         //   if (user_id) {
-        //     getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR s.customer_user_id = ${user_id} OR ca.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign' `;
-        //     countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR s.customer_user_id = ${user_id} OR ca.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign'`;
+        //     getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign' `;
+        //     countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign'`;
         // }
         if (user_id) {
-            getTicketsQuery += ` AND ((ta.assigned_to IS NULL ) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR s.customer_user_id = ${user_id} OR ca.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign' `;
-            countQuery += ` AND ((ta.assigned_to IS NULL ) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR s.customer_user_id = ${user_id} OR ca.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign'`;
+            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign' )`;
+            countQuery += ` AND ((ta.assigned_to IS NULL  AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign')`;
         }
 
         if (assigned_to) {
@@ -628,7 +633,7 @@ const getAllTickets = async (req, res) => {
 
         const result = await connection.query(getTicketsQuery);
         const tickets = result[0];
-
+        
         // Commit the transaction
         await connection.commit();
         const data = {
@@ -648,6 +653,7 @@ const getAllTickets = async (req, res) => {
 
         return res.status(200).json(data);
     } catch (error) {
+        
         return error500(error, res);
     } finally {
         if (connection) connection.release()
@@ -868,29 +874,39 @@ const getMonthWiseStatusCount = async (req, res) => {
         await connection.beginTransaction();
 
         // Fetch open and close status counts grouped by date
+        // let statusCountQuery = `
+        // SELECT 
+        // DATE(t.created_at) AS date, ta.assigned_to, c.customer_id,
+        // COUNT(CASE WHEN t.ticket_status = "Open" THEN 1 END) AS open_count,
+        // COUNT(CASE WHEN t.ticket_status = "Closed" THEN 1 END) AS completed_count
+        // FROM tickets t
+        // LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
+        // LEFT JOIN customers c ON c.user_id = t.user_id
+        // LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
+        // LEFT JOIN signup s ON s.user_id = t.user_id
+        // WHERE DATE(t.created_at) BETWEEN ? AND ?`;
         let statusCountQuery = `
         SELECT 
-        DATE(t.created_at) AS date, ta.assigned_to, c.customer_id,
-        COUNT(CASE WHEN t.ticket_status = "Open" THEN 1 END) AS open_count,
-        COUNT(CASE WHEN t.ticket_status = "Closed" THEN 1 END) AS completed_count
+        DATE(t.created_at) AS date,
+        COUNT(DISTINCT CASE WHEN t.ticket_status = "Open" THEN t.ticket_id  END) AS open_count,
+        COUNT(DISTINCT CASE WHEN t.ticket_status = "Closed" THEN t.ticket_id END) AS completed_count
         FROM tickets t
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
-        LEFT JOIN customers c ON c.user_id = t.user_id
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
-        LEFT JOIN signup s ON s.user_id = t.user_id
         WHERE DATE(t.created_at) BETWEEN ? AND ?`;
 
         // if (user_id) {
         //     statusCountQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = '${user_id}' OR t.user_id = '${user_id}')`;
         // }
 
+        // if (user_id) {
+        //     statusCountQuery += ` AND ( (ta.assigned_to IS NULL OR ca.user_id = ${user_id}) OR t.user_id = ${user_id} OR ta.assigned_to = ${user_id} OR t.customer_user_id = ${user_id} ) `;
+        // }
+        
         if (user_id) {
-            statusCountQuery += `
-                AND ( t.user_id = ${user_id} OR ta.assigned_to = ${user_id} 
-                    OR (ta.assigned_to IS NULL OR ca.user_id = ${user_id}) OR s.customer_user_id = ${user_id}
-                )
-            `;
+            statusCountQuery += ` AND ( ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} OR ( ta.assigned_to IS NULL AND ca.user_id = ${user_id} ))`
         }
+        
         if (customer_id) {
             statusCountQuery += ` AND t.customer_id = '${customer_id}'`;
         }
@@ -935,6 +951,7 @@ const getMonthWiseStatusCount = async (req, res) => {
                 close_count: counts.close_count
             };
         });
+
 
 
         await connection.commit();

@@ -80,7 +80,7 @@ async function logUserActivity({ user_id, session_id, ip_address, device_info, s
      await connection.commit()
     } catch (err) {
         connection.rollback()
-        console.error("Error logging user activity:", err);
+        
     } finally{
       if (connection) await connection.release()
     }
@@ -1630,7 +1630,7 @@ const signUp = async (req, res) => {
       });
     }
     } catch (error) {
-        console.log("kii",error);
+       
         
         await connection.rollback();
         return error500(error, res);
@@ -1768,7 +1768,7 @@ const email_id = req.body.email_id ? req.body.email_id.trim() : "";
 
         })
     } catch (error) {
-        console.log(error);
+        
         
         return error500(error, res)
     } finally {
@@ -2150,7 +2150,7 @@ const logout = async (req, res) => {
             message: "Logout successful"
         });
     } catch (err) {
-        console.error("Logout error:", err);
+        
         res.status(500).json({ message: "Internal server error" });
     }
 };
