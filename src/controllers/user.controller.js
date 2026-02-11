@@ -179,9 +179,10 @@ const createUser = async (req, res) => {
         const userQuery = "SELECT * FROM customers WHERE customer_id  = ?";
         const userResult = await connection.query(userQuery, [customer_id]);
         const domains = userResult[0][0].domain;
+        const customer_user_id = userResult[0][0].user_id;
         //insert into sign up
-        const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain, customer_id, user_id) VALUES (?, ?, ?, ?, ?, ?)`;
-        const insertSignUpValues = [ user_name, email_id, phone_number, domains, customer_id, user_id ];
+        const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain, customer_id, user_id, customer_user_id) VALUES (?, ?, ?, ?, ?, ?, ?)`;
+        const insertSignUpValues = [ user_name, email_id, phone_number, domains, customer_id, user_id, customer_user_id ];
         const insertSignUpResult = await connection.query(insertSignUpQuery, insertSignUpValues);
         }
         
@@ -1982,9 +1983,10 @@ const onStatusChangeCustomer = async (req, res) => {
         // Check if the user(employee) exists
         const userQuery = "SELECT * FROM signup WHERE customer_id = ? ";
         const [userResult] = await connection.query(userQuery, [customerId]);
-        const user_id = userResult[0].user_id;
+        const user_id = userResult[0].user_id || null;
         
         for (let i = 0; i < userResult.length; i++) {
+            const user_id = userResult[i].user_id;
 
         // Soft update the signup
         const updateSignupQuery = `
