@@ -788,6 +788,8 @@ const getTicketStatusCount = async (req, res) => {
             FROM tickets t
             LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
             LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
+            LEFT JOIN signup s ON s.user_id = t.user_id
+
             WHERE 1
         `;
 
@@ -796,7 +798,7 @@ const getTicketStatusCount = async (req, res) => {
                 AND (
                     t.user_id = ${user_id}
                     OR ta.assigned_to = ${user_id}
-                    OR (ta.assigned_to IS NULL AND ca.user_id = ${user_id})
+                    OR (ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR s.customer_user_id = ${user_id}
                 )
             `;
         }
@@ -871,6 +873,8 @@ const getMonthWiseStatusCount = async (req, res) => {
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
         LEFT JOIN customers c ON c.user_id = t.user_id
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
+        LEFT JOIN signup s ON s.user_id = t.user_id
+
         WHERE DATE(t.created_at) BETWEEN ? AND ?`;
 
         // if (user_id) {
@@ -879,8 +883,8 @@ const getMonthWiseStatusCount = async (req, res) => {
 
         if (user_id) {
             statusCountQuery += `
-                AND ( t.user_id = ${user_id}OR ta.assigned_to = ${user_id}
-                    OR (ta.assigned_to IS NULL AND ca.user_id = ${user_id})
+                AND ( t.user_id = ${user_id} OR ta.assigned_to = ${user_id}
+                    OR (ta.assigned_to IS NULL OR ca.user_id = ${user_id}) OR s.customer_user_id = ${user_id}
                 )
             `;
         }
@@ -1209,6 +1213,8 @@ const getStatusList = async (req, res) => {
         LEFT JOIN ticket_categories tc ON tc.ticket_category_id = t.ticket_category_id
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
+                LEFT JOIN signup s ON s.user_id = t.user_id
+
         WHERE 1 AND t.ticket_status = '${ticket_status}'`;
 
         let countQuery = `SELECT COUNT(DISTINCT t.ticket_id) AS total FROM tickets t
@@ -1218,6 +1224,8 @@ const getStatusList = async (req, res) => {
         LEFT JOIN ticket_categories tc ON tc.ticket_category_id = t.ticket_category_id
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
+        LEFT JOIN signup s ON s.user_id = t.user_id
+
         WHERE 1 AND t.ticket_status = '${ticket_status}'`;
 
         if (key) {
@@ -1227,8 +1235,8 @@ const getStatusList = async (req, res) => {
         }
 
         if (user_id) {
-            statusListQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
-            countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id})`;
+            statusListQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR s.customer_user_id = ${user_id}`;
+            countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR s.customer_user_id = ${user_id}`;
         }
 
          if (customer_id) {
