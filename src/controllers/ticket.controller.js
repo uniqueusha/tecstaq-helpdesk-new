@@ -579,8 +579,8 @@ const getAllTickets = async (req, res) => {
         // }
 
         if (user_id) {
-            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR s.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign' `;
-            countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR s.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign'`;
+            getTicketsQuery += ` AND ((ta.assigned_to IS NULL) OR ca.user_id = ${user_id} OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR s.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign' `;
+            countQuery += ` AND ((ta.assigned_to IS NULL) OR ca.user_id = ${user_id} OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR s.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign'`;
         }
 
         if (assigned_to) {
