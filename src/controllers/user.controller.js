@@ -223,7 +223,6 @@ const createUser = async (req, res) => {
                 const department_id = elements.department_id ? elements.department_id : "";
                 const userId = elements.user_id ? elements.user_id: "";
                  
-          
                 const insertAgentQuery = `INSERT INTO customer_agents (customer_id, department_id, user_id, customer_user_id) VALUES (?, ?, ?, ?)`;
                 const insertAgentValues = [ customerid, department_id, userId , customer_user_id];
                 const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
