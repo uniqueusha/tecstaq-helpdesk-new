@@ -1542,7 +1542,7 @@ const signUp = async (req, res) => {
 
         const domainCustomerQuery = ` SELECT * FROM customers WHERE LOWER(TRIM(domain)) = ?`;
         const domainCustomerResult = await connection.query(domainCustomerQuery, [domain.toLowerCase()]);
-        
+        const customer_user_id = domainCustomerResult[0][0].user_id;
         const customerId = domainCustomerResult[0][0].customer_id;
         
         const insertUserQuery = `INSERT INTO users (user_name, email_id, phone_number, role_id) VALUES (?, ?, ?, ?)`;
@@ -1551,8 +1551,8 @@ const signUp = async (req, res) => {
         const user_id = insertuserResult[0].insertId;
         
         //insert into sign up
-        const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain, customer_id, user_id) VALUES (?, ?, ?, ?, ?, ?)`;
-        const insertSignUpValues = [ user_name, email_id, phone_number, domain, customerId, user_id ];
+        const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain, customer_id, user_id, cust_customer_id) VALUES (?, ?, ?, ?, ?, ?)`;
+        const insertSignUpValues = [ user_name, email_id, phone_number, domain, customerId, user_id, customer_user_id ];
         const insertSignUpResult = await connection.query(insertSignUpQuery, insertSignUpValues);
         
         let length = 8,
