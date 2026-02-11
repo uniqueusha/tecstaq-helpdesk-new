@@ -195,7 +195,9 @@ const createUser = async (req, res) => {
             const insertCustomerValues = [ user_name, company_name, email_id, address, phone_number, domain, isSite, user_id ];
             const insertCustomerResult = await connection.query(insertCustomerQuery, insertCustomerValues);
             const customerid = insertCustomerResult[0].insertId;
-            const customer_user_id = insertCustomerResult[0].user_id;
+            const customer_user_id = user_id;
+            console.log(customer_user_id);
+            
 
         let serviceArray = serviceData
         for (let i = 0; i < serviceArray.length; i++) {
