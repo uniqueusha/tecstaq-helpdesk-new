@@ -438,7 +438,7 @@ const getUsers = async (req, res) => {
         //start a transaction
         await connection.beginTransaction();
 
-        let getUserQuery = `SELECT DISTINCT u. user_id ,c.customer_id, d.department_name, r.role_name, u1.user_name, u1.email_id, s.customer_user_id s.phone_number, s.cts, s.status
+        let getUserQuery = `SELECT DISTINCT u. user_id ,c.customer_id, d.department_name, r.role_name, u1.user_name, u1.email_id, s.customer_user_id, s.phone_number, s.cts, s.status
         FROM users u 
         LEFT JOIN departments d ON d.department_id = u.department_id
         LEFT JOIN roles r ON r.role_id = u.role_id
