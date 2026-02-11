@@ -195,6 +195,7 @@ const createUser = async (req, res) => {
             const insertCustomerValues = [ user_name, company_name, email_id, address, phone_number, domain, isSite, user_id ];
             const insertCustomerResult = await connection.query(insertCustomerQuery, insertCustomerValues);
             const customerid = insertCustomerResult[0].insertId;
+            const customer_user_id = insertCustomerResult[0].user_id;
 
         let serviceArray = serviceData
         for (let i = 0; i < serviceArray.length; i++) {
@@ -219,9 +220,10 @@ const createUser = async (req, res) => {
                 const elements = customerAgentArray[i];
                 const department_id = elements.department_id ? elements.department_id : "";
                 const userId = elements.user_id ? elements.user_id: "";
+                 
           
-                const insertAgentQuery = `INSERT INTO customer_agents (customer_id, department_id, user_id) VALUES (?, ?, ?)`;
-                const insertAgentValues = [ customerid, department_id, userId,];
+                const insertAgentQuery = `INSERT INTO customer_agents (customer_id, department_id, user_id, customer_user_id) VALUES (?, ?, ?, ?)`;
+                const insertAgentValues = [ customerid, department_id, userId , customer_user_id];
                 const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
             }
         }
