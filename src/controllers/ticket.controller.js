@@ -870,10 +870,20 @@ const getMonthWiseStatusCount = async (req, res) => {
         FROM tickets t
         LEFT JOIN ticket_assignments ta ON ta.ticket_id = t.ticket_id
         LEFT JOIN customers c ON c.user_id = t.user_id
+        LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
+
         WHERE DATE(t.created_at) BETWEEN ? AND ?`;
 
+        // if (user_id) {
+        //     statusCountQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = '${user_id}' OR t.user_id = '${user_id}')`;
+        // }
+
         if (user_id) {
-            statusCountQuery += ` AND (ta.assigned_to IS NULL OR ta.assigned_to = '${user_id}' OR t.user_id = '${user_id}')`;
+            statusCountQuery += `
+                AND ( t.user_id = ${user_id} OR ta.assigned_to = ${user_id}
+                    OR (ta.assigned_to IS NULL AND ca.user_id = ${user_id})
+                )
+            `;
         }
         if (customer_id) {
             statusCountQuery += ` AND t.customer_id = '${customer_id}'`;
