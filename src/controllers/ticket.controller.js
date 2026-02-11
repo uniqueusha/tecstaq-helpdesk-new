@@ -579,8 +579,8 @@ const getAllTickets = async (req, res) => {
         // }
 
         if (user_id) {
-            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR s.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign' `;
-            countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR s.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign'`;
+            getTicketsQuery += ` AND ((ta.assigned_to IS NULL OR ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR s.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign' `;
+            countQuery += ` AND ((ta.assigned_to IS NULL OR ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR s.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign'`;
         }
 
         if (assigned_to) {
@@ -874,7 +874,6 @@ const getMonthWiseStatusCount = async (req, res) => {
         LEFT JOIN customers c ON c.user_id = t.user_id
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
         LEFT JOIN signup s ON s.user_id = t.user_id
-
         WHERE DATE(t.created_at) BETWEEN ? AND ?`;
 
         // if (user_id) {
@@ -883,7 +882,7 @@ const getMonthWiseStatusCount = async (req, res) => {
 
         if (user_id) {
             statusCountQuery += `
-                AND ( t.user_id = ${user_id} OR ta.assigned_to = ${user_id}
+                AND ( t.user_id = ${user_id} OR ta.assigned_to = ${user_id} 
                     OR (ta.assigned_to IS NULL OR ca.user_id = ${user_id}) OR s.customer_user_id = ${user_id}
                 )
             `;
