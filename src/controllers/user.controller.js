@@ -1551,7 +1551,7 @@ const signUp = async (req, res) => {
         const user_id = insertuserResult[0].insertId;
         
         //insert into sign up
-        const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain, customer_id, user_id, cust_customer_id) VALUES (?, ?, ?, ?, ?, ?)`;
+        const insertSignUpQuery = `INSERT INTO signup (user_name, email_id, phone_number, domain, customer_id, user_id, cust_customer_id) VALUES (?, ?, ?, ?, ?, ?, ?)`;
         const insertSignUpValues = [ user_name, email_id, phone_number, domain, customerId, user_id, customer_user_id ];
         const insertSignUpResult = await connection.query(insertSignUpQuery, insertSignUpValues);
         
