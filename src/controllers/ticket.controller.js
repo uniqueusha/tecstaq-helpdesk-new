@@ -275,7 +275,7 @@ const createTicket = async (req, res)=>{
         const mailOptions = {
             from: "support@tecstaq.com", // Sender address from environment variables.
             to: [created_email_id, email_id, technician_email_id, customer_email_id], // Recipient's name and email address."sushantsjamdade@gmail.com",
-            bcc: ["@gmail.com"],
+            bcc: ["usha.yadav@tecstaq.com"],
             subject: `Ticket ${ticket_no} Created Successfully`,
             html: message,
         };
