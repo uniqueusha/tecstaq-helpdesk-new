@@ -218,7 +218,7 @@ const createTicket = async (req, res)=>{
         const priorityDataQuery = `SELECT name FROM priorities WHERE priority_id = ?`;
         const [priorityDataResult] = await connection.query(priorityDataQuery,[priority_id]);
 
-         const customerQuery = `SELECT email_id FROM customers WHERE customer_id = ?`;
+        const customerQuery = `SELECT email_id, company_name FROM customers WHERE customer_id = ?`;
         const [customerResult] = await connection.query(customerQuery,[customer_id]);
 
 
@@ -230,6 +230,8 @@ const createTicket = async (req, res)=>{
         const email_id = userAssignedDataResult.email_id || null;
         const created_at = createdAtResult[0].created_at.toISOString().split('T')[0];
         const customer_email_id = customerResult[0].email_id;
+        const company_name = customerResult[0].company_name;
+        
 
 
         const message = `
@@ -252,6 +254,7 @@ const createTicket = async (req, res)=>{
         <h2 style="text-transform: capitalize;">Dear Team,</h2>
         </p>Here are the details of your ticket:</p>
         <p>Ticket No: ${ticket_no}</p>
+        <p>Company Name : ${company_name}</p>
         <p>Subject: ${subject}</P>
         <p>Category: ${category_name}</p>
         <p>Priority: ${priority_name}</p>
@@ -272,7 +275,7 @@ const createTicket = async (req, res)=>{
         const mailOptions = {
             from: "support@tecstaq.com", // Sender address from environment variables.
             to: [created_email_id, email_id, technician_email_id, customer_email_id], // Recipient's name and email address."sushantsjamdade@gmail.com",
-            // bcc: ["sushantsjamdade@gmail.com"],
+            bcc: ["@gmail.com"],
             subject: `Ticket ${ticket_no} Created Successfully`,
             html: message,
         };
@@ -398,7 +401,7 @@ const updateTicket = async (req, res) => {
         // Commit the transaction
         await connection.commit();
 
-        const userQuery = `SELECT user_name, email_id FROM users WHERE role_id = 2 AND status = 1`;
+        const userQuery = `SELECT user_name, email_id FROM users WHERE role_id = 2 AND status = 1 AND  customer_id = ?`;
         const [userResult] = await connection.query(userQuery);
 
 for (let i = 0; i < userResult.length; i++) {
