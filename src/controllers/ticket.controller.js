@@ -806,9 +806,9 @@ const getTicketStatusCount = async (req, res) => {
         if (user_id) {
             statusCountQuery += `
                 AND (
-                    t.user_id = ${user_id}
-                    OR ta.assigned_to = ${user_id}
-                    OR (ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR s.customer_user_id = ${user_id}
+                    
+                    ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id}
+                    OR (ta.assigned_to IS NULL AND ca.user_id = ${user_id}) 
                 )
             `;
         }
@@ -904,7 +904,7 @@ const getMonthWiseStatusCount = async (req, res) => {
         // }
         
         if (user_id) {
-            statusCountQuery += ` AND ( ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} OR ( ta.assigned_to IS NULL AND ca.user_id = ${user_id} ))`
+            statusCountQuery += ` AND ( ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} OR ( ta.assigned_to IS NULL AND ca.user_id = ${user_id}))`
         }
         
         if (customer_id) {
@@ -1233,7 +1233,7 @@ const getStatusList = async (req, res) => {
         LEFT JOIN ticket_categories tc ON tc.ticket_category_id = t.ticket_category_id
         LEFT JOIN customers c ON c.customer_id = t.customer_id
         LEFT JOIN customer_agents ca ON ca.customer_id = t.customer_id
-                LEFT JOIN signup s ON s.user_id = t.user_id
+        LEFT JOIN signup s ON s.user_id = t.user_id
 
         WHERE 1 AND t.ticket_status = '${ticket_status}'`;
 
@@ -1255,8 +1255,8 @@ const getStatusList = async (req, res) => {
         }
 
         if (user_id) {
-            statusListQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR s.customer_user_id = ${user_id}`;
-            countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR s.customer_user_id = ${user_id}`;
+            statusListQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} )`;
+            countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} )`;
         }
 
          if (customer_id) {
@@ -1373,8 +1373,8 @@ const getAllTicketReports = async (req, res) => {
         }
 
         if (user_id) {
-            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR ts.changed_by = ${user_id}) OR t.ticket_status = 'Re-assign' `;
-            countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR ts.changed_by = ${user_id}) OR t.ticket_status = 'Re-assign'  `;
+            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR ts.changed_by = ${user_id}) OR t.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign' `;
+            countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR ts.changed_by = ${user_id}) OR t.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign'  `;
         }
 
         //  if (user_id) {
