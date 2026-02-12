@@ -197,7 +197,8 @@ const createTicket = async (req, res)=>{
         LEFT JOIN customer_agents ca ON ca.user_id = u.user_id
         WHERE u.role_id = 2 AND u.status = 1 AND ca.customer_id = ${customer_id}`;
         const [userResult] = await connection.query(userQuery);
-
+ 
+        let technicianEmails = [];
         for (let i = 0; i < userResult.length; i++) {
             const element = userResult[i];
             const technician_name = userResult[i].user_name;
@@ -232,7 +233,9 @@ const createTicket = async (req, res)=>{
         const customer_email_id = customerResult[0].email_id;
         const company_name = customerResult[0].company_name;
         
-
+        if (technician_email_id) {
+             technicianEmails.push(technician_email_id);
+        }
 
         const message = `
         <!DOCTYPE html>
@@ -274,7 +277,8 @@ const createTicket = async (req, res)=>{
         // Prepare the email message options.
         const mailOptions = {
             from: "support@tecstaq.com", // Sender address from environment variables.
-            to: [created_email_id, email_id, technician_email_id, customer_email_id], // Recipient's name and email address."sushantsjamdade@gmail.com",
+            to: [created_email_id, email_id, customer_email_id].filter(Boolean), 
+            cc : technicianEmails,
             bcc: ["usha.yadav@tecstaq.com"],
             subject: `Ticket ${ticket_no} Created Successfully`,
             html: message,
