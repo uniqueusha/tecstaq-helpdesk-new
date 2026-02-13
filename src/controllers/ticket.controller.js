@@ -272,7 +272,7 @@ const createTicketold = async (req, res)=>{
           <p>We appreciate your patience and will resolve your query promptly.</p>
           <p>Best regards,</p>
           <p><strong>Tecstaq Support</strong></p>
-          <a href="support@dani.com">support@dani.com</a>
+          <a href="support@tecstaq.com">support@tecstaq.com</a>
         </div>
         </body>
         </html>`;
@@ -509,7 +509,7 @@ const createTicket = async (req, res)=>{
         
           <p>Best regards,</p>
           <p><strong>Tecstaq Support</strong></p>
-          <a href="support@dani.com">support@dani.com</a>
+          <a href="support@tecstaq.com">support@tecstaq.com</a>
         </div>
         </body>
         </html>`;
@@ -546,7 +546,7 @@ const createTicket = async (req, res)=>{
           <p>We appreciate your patience and will resolve your query promptly.</p>
           <p>Best regards,</p>
           <p><strong>Tecstaq Support</strong></p>
-          <a href="support@dani.com">support@dani.com</a>
+          <a href="support@tecstaq.com">support@tecstaq.com</a>
         </div>
         </body>
         </html>`;
@@ -750,7 +750,7 @@ const updateTicket = async (req, res) => {
           <p>Thank you for choosing Tecstaq Support.</p>
           <p>Best regards,</p>
           <p><strong>Tecstaq Support</strong></p>
-          <a href="support@dani.com">support@dani.com</a>
+          <a href="support@tecstaq.com">support@tecstaq.com</a>
         </div>
         </body>
         </html>`;
@@ -815,7 +815,6 @@ const updateTicket = async (req, res) => {
         const priority_name = priorityDataResult[0].name;
         const assigned_user_name = userAssignedDataResult.user_name || null;
         const created_at = createdAtResult[0].created_at.toISOString().split('T')[0];
-        console.log(created_at);
         
         const customer_email_id = customerResult[0].email_id;
         const company_name = customerResult[0].company_name;
@@ -851,7 +850,7 @@ const updateTicket = async (req, res) => {
         
           <p>Best regards,</p>
           <p><strong>Tecstaq Support</strong></p>
-          <a href="support@dani.com">support@dani.com</a>
+          <a href="support@tecstaq.com">support@tecstaq.com</a>
         </div>
         </body>
         </html>`;
