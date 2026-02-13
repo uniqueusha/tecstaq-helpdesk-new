@@ -971,8 +971,8 @@ const getAllTickets = async (req, res) => {
         //     countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign'`;
         // }
         if (user_id) {
-            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id} OR t.ticket_status = 'Re-assign') OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id}  )`;
-            countQuery += ` AND ((ta.assigned_to IS NULL  AND ca.user_id = ${user_id} OR t.ticket_status = 'Re-assign') OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} )`;
+            getTicketsQuery += ` AND (((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id}) OR t.ticket_status = 'Re-assign' )`;
+            countQuery += ` AND (((ta.assigned_to IS NULL  AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id}) OR t.ticket_status = 'Re-assign')`;
         }
 
         if (assigned_to) {
@@ -1003,6 +1003,8 @@ const getAllTickets = async (req, res) => {
         getTicketsQuery += " GROUP BY t.ticket_id";
 
         getTicketsQuery += " ORDER BY t.created_at DESC";
+        
+        
 
         // Apply pagination if both page and perPage are provided
         let total = 0;
@@ -1016,6 +1018,7 @@ const getAllTickets = async (req, res) => {
 
         const result = await connection.query(getTicketsQuery);
         const tickets = result[0];
+        console.log(getTicketsQuery);
         
         // Commit the transaction
         await connection.commit();
