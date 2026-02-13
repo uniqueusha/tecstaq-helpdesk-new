@@ -467,8 +467,8 @@ const getUsers = async (req, res) => {
                 getUserQuery += ` AND status = 0`;
                 countQuery += ` AND status = 0`;
             } else {
-                getUserQuery += ` AND (LOWER(u.user_name) LIKE '%${lowercaseKey}%' || LOWER(r.role_name) LIKE '%${lowercaseKey}%')`;
-                countQuery += ` AND (LOWER(u.user_name) LIKE '%${lowercaseKey}%' || LOWER(r.role_name) LIKE '%${lowercaseKey}%')`;
+                getUserQuery += ` AND (LOWER(u1.user_name) LIKE '%${lowercaseKey}%' || LOWER(c.company_name) LIKE '%${lowercaseKey}%' || LOWER(u1.email_id) LIKE '%${lowercaseKey}%' || LOWER(s.phone_number) LIKE '%${lowercaseKey}%')`;
+                countQuery += ` AND (LOWER(u1.user_name) LIKE '%${lowercaseKey}%' || LOWER(c.company_name) LIKE '%${lowercaseKey}%' || LOWER(u1.email_id) LIKE '%${lowercaseKey}%' || LOWER(s.phone_number) LIKE '%${lowercaseKey}%')`;
             }
         }
 
@@ -1325,6 +1325,8 @@ const getUserDownload = async (req, res) => {
 
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
+            getUserQuery += ` AND (LOWER(u1.user_name) LIKE '%${lowercaseKey}%' || LOWER(c.company_name) LIKE '%${lowercaseKey}%' || LOWER(u1.email_id) LIKE '%${lowercaseKey}%' || LOWER(s.phone_number) LIKE '%${lowercaseKey}%')`;
+
         }
 
         if (role_id) {
