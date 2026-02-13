@@ -815,6 +815,8 @@ const updateTicket = async (req, res) => {
         const priority_name = priorityDataResult[0].name;
         const assigned_user_name = userAssignedDataResult.user_name || null;
         const created_at = createdAtResult[0].created_at.toISOString().split('T')[0];
+        console.log(created_at);
+        
         const customer_email_id = customerResult[0].email_id;
         const company_name = customerResult[0].company_name;
         
