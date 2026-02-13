@@ -448,8 +448,7 @@ const getUsers = async (req, res) => {
         LEFT JOIN customers c ON c.user_id = u.user_id
         LEFT JOIN signup s ON s.customer_id = c.customer_id
         LEFT JOIN users u1 ON u1.user_id = s.user_id
-       
-        WHERE 1 `;
+        WHERE 1  AND u.status = 1`;
 
         let countQuery = `SELECT COUNT(*) AS total FROM users u 
         LEFT JOIN departments d ON d.department_id = u.department_id
@@ -457,7 +456,7 @@ const getUsers = async (req, res) => {
         LEFT JOIN customers c ON c.user_id = u.user_id
         LEFT JOIN signup s ON s.customer_id = c.customer_id
         LEFT JOIN users u1 ON u1.user_id = s.user_id
-        WHERE 1 `;
+        WHERE 1  AND u.status = 1`;
 
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
@@ -1309,18 +1308,19 @@ const deleteTechnician = async (req, res) => {
 //User download
 const getUserDownload = async (req, res) => {
 
-    const { key } = req.query;
+    const { key, user_id, role_id, customer_id } = req.query;
 
     let connection = await getConnection();
     try {
         await connection.beginTransaction();
 
-        let getUserQuery = `SELECT u.*, d.department_name, r.role_name 
+        let getUserQuery = `SELECT DISTINCT s.user_id ,c.customer_id, c.company_name, d.department_name, r.role_name, u1.user_name, u1.email_id, s.customer_user_id, s.phone_number, s.cts, s.status
         FROM users u 
-        LEFT JOIN departments d
-        ON d.department_id = u.department_id
-        LEFT JOIN roles r
-        ON r.role_id = u.role_id
+        LEFT JOIN departments d ON d.department_id = u.department_id
+        LEFT JOIN roles r ON r.role_id = u.role_id
+        LEFT JOIN customers c ON c.user_id = u.user_id
+        LEFT JOIN signup s ON s.customer_id = c.customer_id
+        LEFT JOIN users u1 ON u1.user_id = s.user_id
         WHERE 1 AND u.status = 1`;
 
         if (key) {
@@ -1328,6 +1328,19 @@ const getUserDownload = async (req, res) => {
             getUserQuery += ` AND (LOWER(name) LIKE '%${lowercaseKey}%')`;
         }
 
+        if (role_id) {
+            getUserQuery += ` AND u.role_id = ${role_id} `;
+            countQuery += ` AND u.role_id = ${role_id}  `;
+        }
+        if (customer_id) {
+            getUserQuery += ` AND s.customer_id = ${customer_id} `;
+            countQuery += ` AND s.customer_id = ${customer_id}  `;
+        }
+
+        if (user_id) {
+            getUserQuery += ` AND s.customer_user_id = ${user_id} `;
+            countQuery += ` AND s.customer_user_id = ${user_id}  `;
+        }
         getUserQuery += " ORDER BY u.created_at DESC";
 
         let result = await connection.query(getUserQuery);

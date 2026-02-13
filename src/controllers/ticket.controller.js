@@ -49,7 +49,8 @@ error404 = (message, res) => {
   });
 };
 
-const createTicket = async (req, res)=>{
+//email  customer and team one email
+const createTicketold = async (req, res)=>{
     const ticket_category_id = req.body.ticket_category_id ? req.body.ticket_category_id :'';
     const priority_id = req.body.priority_id ? req.body.priority_id :'';
     const department_id = req.body.department_id ? req.body.department_id :'';
@@ -200,10 +201,14 @@ const createTicket = async (req, res)=>{
  
         let technicianEmails = [];
         for (let i = 0; i < userResult.length; i++) {
-            const element = userResult[i];
-            const technician_name = userResult[i].user_name;
             const technician_email_id = userResult[i].email_id;
-            
+            if (technician_email_id) {
+             technicianEmails.push(technician_email_id);
+            }  
+             
+        }
+        console.log("All technician emails:", technicianEmails);
+
         const userDataQuery = `SELECT user_name, email_id FROM users WHERE user_id = ?`;
         const [userDataResult] = await connection.query(userDataQuery,[user_id]);
         
@@ -233,9 +238,7 @@ const createTicket = async (req, res)=>{
         const customer_email_id = customerResult[0].email_id;
         const company_name = customerResult[0].company_name;
         
-        if (technician_email_id) {
-             technicianEmails.push(technician_email_id);
-        }
+        
 
         const message = `
         <!DOCTYPE html>
@@ -296,7 +299,7 @@ const createTicket = async (req, res)=>{
         message: "Ticket created successfully, but failed to send email.",
         });
     }
-    }
+    
     } catch (error) {
        
         await connection.rollback();
@@ -305,7 +308,284 @@ const createTicket = async (req, res)=>{
         if (connection) connection.release();
     }
 }
+//email separation customer and team two email
+const createTicket = async (req, res)=>{
+    const ticket_category_id = req.body.ticket_category_id ? req.body.ticket_category_id :'';
+    const priority_id = req.body.priority_id ? req.body.priority_id :'';
+    const department_id = req.body.department_id ? req.body.department_id :'';
+    const subject = req.body.subject ? req.body.subject.trim() :'';
+    const customer_id = req.body.customer_id ? req.body.customer_id :'';
+    const service_id = req.body.service_id ? req.body.service_id :'';
+    const description = req.body.description ? req.body.description.trim() :'';
+    const ticket_status = req.body.ticket_status ? req.body.ticket_status.trim() : null;
+    const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
+    const ticket_conversation_id = req.body.ticket_conversation_id ? req.body.ticket_conversation_id : null;
+    const base64PDF = req.body.file_path ? req.body.file_path.trim() :null;
+    const assigned_to = req.body.assigned_to ? req.body.assigned_to : null;
+    const remarks = req.body.remarks ? req.body.remarks.trim() : null;
+    const old_status = req.body.old_status ? req.body.old_status : null;
+    const new_status = req.body.new_status ? req.body.new_status : '';
+    const user_id = req.companyData.user_id;
 
+    if (!subject) {
+        return error422("Subject is required.", res);
+    }  
+
+    let connection = await getConnection();
+
+    try {
+        // start the transaction
+        await connection.beginTransaction();
+
+         //get customer id
+    const isSignCustomerIDQuery = `SELECT * FROM signup WHERE user_id= ?`;
+    const isSignCustomerIDResult = await connection.query(isSignCustomerIDQuery, [user_id]);
+    const signCustomerExist = isSignCustomerIDResult[0];
+
+     //get customer id
+    const isCustomerQuery = `SELECT * FROM customers WHERE user_id= ?`;
+    const isCustomerResult = await connection.query(isCustomerQuery, [user_id]);
+    const customerExist = isCustomerResult[0];
+    
+    //get customer id
+    const isCustomerAgentQuery = `SELECT * FROM customer_agents WHERE user_id= ?`;
+    const isCustomerAgentResult = await connection.query(isCustomerAgentQuery, [user_id]);
+    const customerAgentExist = isCustomerAgentResult[0];
+
+
+        const [rows] = await connection.query(`
+        SELECT ticket_no 
+        FROM tickets 
+        WHERE customer_id = ? 
+        ORDER BY ticket_id DESC 
+        LIMIT 1
+    `, [customer_id]);
+
+        let ticket_no = 'TCK-1'; // default first ticket number
+
+        if (rows.length > 0) {
+            const lastTicketNo = rows[0].ticket_no; // e.g., "TCK-12"
+            const lastNumber = parseInt(lastTicketNo.split('-')[1], 10);
+            ticket_no = `TCK-${lastNumber + 1}`;
+        }
+
+        const closedAtQuery = `SELECT * FROM ticket_status_history WHERE LOWER(TRIM(new_status)) = "Closed" `;
+        const closedAtResult = await connection.query(closedAtQuery);
+        const closed_at = closedAtResult[0].cts;
+
+        const customerUserIdQuery = ` SELECT * FROM customers WHERE customer_id = ?`
+        const [customerUserIdResult] = await connection.query(customerUserIdQuery, [customer_id]);
+        const customer_user_id = customerUserIdResult[0].user_id;
+        
+        const insertTicketQuery = "INSERT INTO tickets (ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, service_id, description, ticket_status, closed_at, customer_user_id)VALUES(?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)";
+        const insertTicketResult = await connection.query(insertTicketQuery,[ticket_no, user_id, ticket_category_id, priority_id, department_id, subject, customer_id, service_id, description, ticket_status, closed_at, customer_user_id]);
+        const ticket_id = insertTicketResult[0].insertId
+        
+        if (base64PDF) {
+        const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
+        const pdfBuffer = Buffer.from(cleanedBase64, "base64");
+
+        const fileType = await import('file-type');
+        const fileTypeResult = await fileType.fileTypeFromBuffer(pdfBuffer);
+
+        const allowedMimeTypes = [
+          'application/pdf',
+          'image/jpg',
+          'image/png'
+        ];
+
+        // if (pdfBuffer.length > 10 * 1024 * 1024) {
+        //   await connection.query("ROLLBACK");
+        //   return error422("File size must be under 10MB", res);
+        // }
+
+        const fileName = `ticket_${ticket_id}_${Date.now()}.${fileTypeResult.ext}`;
+        const filePath = path.join(__dirname, "..", "..", "uploads", fileName);
+
+        fs.writeFileSync(filePath, pdfBuffer);
+
+        const dbFilePath = `uploads/${fileName}`;
+        const insertTicketAttachmentQuery = "INSERT INTO ticket_attachments (ticket_id, ticket_conversation_id, file_path, uploaded_by)VALUES(?, ?, ?, ?)";
+        const insertTicketAttachmentResult = await connection.query(insertTicketAttachmentQuery,[ticket_id, ticket_conversation_id, dbFilePath, user_id]);
+    }
+
+        const insertTicketAssignedQuery = "INSERT INTO ticket_assignments (ticket_id, assigned_to, assigned_by, remarks)VALUES(?, ?, ?, ?)";
+        const insertTicketAssignedResult = await connection.query(insertTicketAssignedQuery,[ticket_id, assigned_to, user_id,  remarks]);
+
+        let insertTicketStatusHistoryQuery = 'INSERT INTO  ticket_conversations(ticket_id, sender_id, message) VALUES (?, ?, ?)';
+        let insertTicketStatusHistoryValues = [ ticket_id, user_id, description ];
+        let insertTicketStatusHistoryResult = await connection.query(insertTicketStatusHistoryQuery, insertTicketStatusHistoryValues);
+
+        let insertTicketConversationQuery = 'INSERT INTO ticket_status_history (ticket_id, old_status, new_status, changed_by, remarks) VALUES (?, ?, ?, ?, ?)';
+        let insertTicketConversationValues = [ ticket_id, old_status, ticket_status, user_id, remarks];
+        let insertTicketConversationResult = await connection.query(insertTicketConversationQuery, insertTicketConversationValues);
+        
+        await connection.commit();
+
+        const userQuery = `SELECT u.user_name, u.email_id FROM users u
+        LEFT JOIN customer_agents ca ON ca.user_id = u.user_id
+        WHERE u.role_id = 2 AND u.status = 1 AND ca.customer_id = ${customer_id}`;
+        const [userResult] = await connection.query(userQuery);
+ 
+        let technicianEmails = [];
+        for (let i = 0; i < userResult.length; i++) {
+            const technician_email_id = userResult[i].email_id;
+            if (technician_email_id) {
+             technicianEmails.push(technician_email_id);
+            }  
+             
+        }
+        console.log("All technician emails:", technicianEmails);
+
+        const userDataQuery = `SELECT user_name, email_id FROM users WHERE user_id = ?`;
+        const [userDataResult] = await connection.query(userDataQuery,[user_id]);
+        
+        const createdAtQuery = `SELECT created_at FROM tickets WHERE user_id = ?`;
+        const [createdAtResult] = await connection.query(createdAtQuery,[user_id]);
+        
+        const userAssignedDataQuery = `SELECT user_name, email_id FROM users WHERE user_id = ?`;
+        const [userAssignedDataResult] = await connection.query(userAssignedDataQuery,[assigned_to]);
+        
+        const categoryDataQuery = `SELECT name FROM ticket_categories WHERE ticket_category_id = ?`;
+        const [categoryDataResult] = await connection.query(categoryDataQuery,[ticket_category_id]);
+
+        const priorityDataQuery = `SELECT name FROM priorities WHERE priority_id = ?`;
+        const [priorityDataResult] = await connection.query(priorityDataQuery,[priority_id]);
+
+        const customerQuery = `SELECT email_id, company_name FROM customers WHERE customer_id = ?`;
+        const [customerResult] = await connection.query(customerQuery,[customer_id]);
+
+
+        const created_user_name = userDataResult[0].user_name;
+        const created_email_id = userDataResult[0].email_id;
+        const category_name = categoryDataResult[0].name;
+        const priority_name = priorityDataResult[0].name;
+        const assigned_user_name = userAssignedDataResult.user_name || null;
+        const email_id = userAssignedDataResult.email_id || null;
+        const created_at = createdAtResult[0].created_at.toISOString().split('T')[0];
+        const customer_email_id = customerResult[0].email_id;
+        const company_name = customerResult[0].company_name;
+        
+        
+
+        const technicianMessage  = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <title>Welcome to test</title>
+          <style>
+              div{
+              font-family: Arial, sans-serif; 
+               margin: 0px;
+                padding: 0px;
+                color:black;
+              }
+          </style>
+        </head>
+        <body>
+        <div>
+        <h2 style="text-transform: capitalize;">Dear Team,</h2>
+        </p>Here are the details of your ticket:</p>
+        <p>Ticket No: ${ticket_no}</p>
+        <p>Company Name : ${company_name}</p>
+        <p>Subject: ${subject}</P>
+        <p>Category: ${category_name}</p>
+        <p>Priority: ${priority_name}</p>
+        <p>Description: ${description}</p>
+        <p>Created By: ${created_user_name}</p>
+        <p>Status: Open</p>
+        <p>Created On: ${created_at}</p>
+        
+          <p>Best regards,</p>
+          <p><strong>Tecstaq Support</strong></p>
+          <a href="support@dani.com">support@dani.com</a>
+        </div>
+        </body>
+        </html>`;
+
+        const customerMessage  = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <title>Welcome to test</title>
+          <style>
+              div{
+              font-family: Arial, sans-serif; 
+               margin: 0px;
+                padding: 0px;
+                color:black;
+              }
+          </style>
+        </head>
+        <body>
+        <div>
+        <h2 style="text-transform: capitalize;">Dear Customer,</h2>
+        </p>Here are the details of your ticket:</p>
+        <p>Ticket No: ${ticket_no}</p>
+        <p>Company Name : ${company_name}</p>
+        <p>Subject: ${subject}</P>
+        <p>Category: ${category_name}</p>
+        <p>Priority: ${priority_name}</p>
+        <p>Description: ${description}</p>
+        <p>Created By: ${created_user_name}</p>
+        <p>Status: Open</p>
+        <p>Created On: ${created_at}</p>
+        <p>Thank you for reaching out to us.</p>
+          <p>We appreciate your patience and will resolve your query promptly.</p>
+          <p>Best regards,</p>
+          <p><strong>Tecstaq Support</strong></p>
+          <a href="support@dani.com">support@dani.com</a>
+        </div>
+        </body>
+        </html>`;
+
+
+        // Prepare the email message options.
+        const technicianMailOptions  = {
+            from: "support@tecstaq.com", // Sender address from environment variables.
+            to: technicianEmails,
+            // to: [created_email_id, email_id, customer_email_id].filter(Boolean), 
+            // cc : technicianEmails,
+            bcc: ["usha.yadav@tecstaq.com"],
+            subject: `Ticket ${ticket_no} Created Successfully`,
+            html: technicianMessage,
+        };
+
+        const customerMailOptions = {
+            from: "support@tecstaq.com",
+            to: created_email_id,  
+            bcc: ["usha.yadav@tecstaq.com"],
+            subject: `Ticket ${ticket_no} Created Successfully`,
+            html: customerMessage,
+        };
+    
+        
+        try {
+        // Send to technicians
+        await transporter.sendMail(technicianMailOptions);
+        // Send to customer
+        await transporter.sendMail(customerMailOptions);
+
+        return res.status(200).json({
+        status: 200,
+        message: `Ticket created successfully And Check Mail.`,
+        });
+    } catch (emailError) {
+        return res.status(200).json({
+        status: 200,
+        message: "Ticket created successfully, but failed to send email.",
+        });
+    }
+    
+    } catch (error) {
+        await connection.rollback();
+        return error500(error, res);
+    } finally{
+        if (connection) connection.release();
+    }
+}
 //Update ticket
 const updateTicket = async (req, res) => {
     const ticketId = parseInt(req.params.id);
@@ -1138,7 +1418,7 @@ const getTicketDownload = async (req, res) => {
         }
 
         if (user_id) {
-            getTicketQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign'`;
+            getTicketQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign')`;
         }
 
         if (assigned_to) {
@@ -1539,7 +1819,7 @@ const getTicketReportsDownload = async (req, res) => {
         }
 
         if (user_id) {
-            getTicketReportsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR ts.changed_by = ${user_id}) OR t.ticket_status = 'Re-assign' `;
+            getTicketReportsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR ts.changed_by = ${user_id} OR t.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign' )`;
         }
 
         if (assigned_to) {
