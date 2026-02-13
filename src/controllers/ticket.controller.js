@@ -3,6 +3,8 @@ const fs = require('fs');
 const path = require('path');
 const nodemailer = require("nodemailer");
 const xlsx = require("xlsx");
+const FileType = require("file-type");
+
 
 const transporter = nodemailer.createTransport({
     host: "smtp-mail.outlook.com",
@@ -509,7 +511,7 @@ const createTicket = async (req, res)=>{
         
           <p>Best regards,</p>
           <p><strong>Tecstaq Support</strong></p>
-          <a href="support@tecstaq.com">support@tecstaq.com</a>
+          <a href="https://support.tecstaq.com/">support@tecstaq.com</a>
         </div>
         </body>
         </html>`;
@@ -609,7 +611,7 @@ const updateTicket = async (req, res) => {
     // const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
     const ticket_conversation_id = req.body.ticket_conversation_id ? req.body.ticket_conversation_id : null;
     const base64PDF = req.body.base64PDF ? req.body.base64PDF.trim() : null;
-    const assigned_to = req.body.assigned_to ? req.body.assigned_to : '';
+    const assigned_to = req.body.assigned_to ? req.body.assigned_to : null;
         // const remark = req.body.remark ? req.body.remark.trim() :'';
     const assigned_at = req.body.assigned_at ? req.body.assigned_at : null;
     const remarks = req.body.remarks ? req.body.remarks.trim() :'';
@@ -750,7 +752,7 @@ const updateTicket = async (req, res) => {
           <p>Thank you for choosing Tecstaq Support.</p>
           <p>Best regards,</p>
           <p><strong>Tecstaq Support</strong></p>
-          <a href="support@tecstaq.com">support@tecstaq.com</a>
+         <a href="https://support.tecstaq.com/">support@tecstaq.com</a>
         </div>
         </body>
         </html>`;
@@ -794,8 +796,8 @@ const updateTicket = async (req, res) => {
         const userDataQuery = `SELECT user_name, email_id FROM users WHERE user_id = ?`;
         const [userDataResult] = await connection.query(userDataQuery,[user_id]);
         
-        const createdAtQuery = `SELECT created_at FROM tickets WHERE user_id = ?`;
-        const [createdAtResult] = await connection.query(createdAtQuery,[user_id]);
+        const createdAtQuery = `SELECT created_at FROM tickets WHERE ticket_id = ?`;
+        const [createdAtResult] = await connection.query(createdAtQuery,[ticketId]);
         
         const userAssignedDataQuery = `SELECT user_name, email_id FROM users WHERE user_id = ?`;
         const [userAssignedDataResult] = await connection.query(userAssignedDataQuery,[assigned_to]);
@@ -850,7 +852,7 @@ const updateTicket = async (req, res) => {
         
           <p>Best regards,</p>
           <p><strong>Tecstaq Support</strong></p>
-          <a href="support@tecstaq.com">support@tecstaq.com</a>
+          <a href="https://support.tecstaq.com/">support@tecstaq.com</a>
         </div>
         </body>
         </html>`;
@@ -969,8 +971,8 @@ const getAllTickets = async (req, res) => {
         //     countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign'`;
         // }
         if (user_id) {
-            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign' )`;
-            countQuery += ` AND ((ta.assigned_to IS NULL  AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign')`;
+            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR (t.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign' ))`;
+            countQuery += ` AND ((ta.assigned_to IS NULL  AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR (t.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign'))`;
         }
 
         if (assigned_to) {
