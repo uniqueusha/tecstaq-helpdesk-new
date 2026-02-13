@@ -684,57 +684,23 @@ const updateTicket = async (req, res) => {
         
         // Commit the transaction
         await connection.commit();
-
-        // const userQuery = `SELECT user_name, email_id FROM users WHERE role_id = 2 AND status = 1 AND  customer_id = ?`;
-        // const [userResult] = await connection.query(userQuery);
-        const userQuery = `SELECT user_name, email_id FROM users WHERE role_id = 2 AND status = 1`;
-        const [userResult] = await connection.query(userQuery);
-
-
-for (let i = 0; i < userResult.length; i++) {
-            const element = userResult[i];
-            const technician_name = userResult[i].user_name;
-            const technician_email_id = userResult[i].email_id;
-
-        const userDataQuery = `SELECT user_name, email_id FROM users WHERE user_id = ?`;
-        const [userDataResult] = await connection.query(userDataQuery,[user_id]);
         
-        const createdAtQuery = `SELECT created_at,ticket_no,ticket_status FROM tickets WHERE ticket_id = ?`;
+        const createdAtQuery = `SELECT closed_at, ticket_status, customer_id, customer_user_id FROM tickets WHERE ticket_id = ? `;
         const [createdAtResult] = await connection.query(createdAtQuery,[ticketId]);
-
-        const assginedQuery = `SELECT tc.remarks, tc.assigned_to, u.user_name FROM ticket_assignments tc 
-        LEFT JOIN users u ON u.user_id = tc.assigned_to
-        WHERE tc.assigned_to = ?`;
-        const [assginedResult] = await connection.query(assginedQuery,[assigned_to]);
-        
-        const userAssignedDataQuery = `SELECT user_name, email_id FROM users WHERE user_id = ?`;
-        const [userAssignedDataResult] = await connection.query(userAssignedDataQuery,[assigned_to]);
-        
-        const categoryDataQuery = `SELECT name FROM ticket_categories WHERE ticket_category_id = ?`;
-        const [categoryDataResult] = await connection.query(categoryDataQuery,[ticket_category_id]);
-
-        const priorityDataQuery = `SELECT name FROM priorities WHERE priority_id = ?`;
-        const [priorityDataResult] = await connection.query(priorityDataQuery,[priority_id]);
-
-       
-        const created_user_name = userDataResult[0].user_name;
-        const created_email_id = userDataResult[0].email_id;
-        const category_name = categoryDataResult[0].name;
-        const priority_name = priorityDataResult[0].name;
-        const assigned_user_name = userAssignedDataResult.user_name || null;
-        const email_id = userAssignedDataResult.email_id || null;
-        const remarks = assginedResult[0].remarks;
-        const ticket_no = createdAtResult[0].ticket_no;
-        const ticket_status = createdAtResult[0].ticket_status;
-        const assigned_name = assginedResult[0].user_name;
-        const created_at = createdAtResult[0].created_at.toISOString().split('T')[0];
+        const customer_user_id = createdAtResult[0].customer_user_id;
+         
+        const createAtQuery = `SELECT email_id, user_name FROM users WHERE user_id = ? `;
+        const [createAtResult] = await connection.query(createAtQuery,[customer_user_id]);
+        const email_id = createAtResult[0].email_id;
+        const user_name = createAtResult[0].user_name;
+        const closed_at = createdAtResult[0].closed_at.toISOString().split('T')[0];
 
         const message = `
         <!DOCTYPE html>
         <html lang="en">
         <head>
           <meta charset="UTF-8">
-          <title>Welcome to test</title>
+          <title>Welcome to Tecstaq Support</title>
           <style>
               div{
               font-family: Arial, sans-serif; 
@@ -746,20 +712,12 @@ for (let i = 0; i < userResult.length; i++) {
         </head>
         <body>
         <div>
-        <h2 style="text-transform: capitalize;">Dear Team,</h2>
-        </p>Here are the details of your ticket:</p>
-        <p>Ticket No: ${ticket_no}</p>
-        <p>Subject: ${subject}</P>
-        <p>Category: ${category_name}</p>
-        <p>Priority: ${priority_name}</p>
-        <p>Description: ${description}</p>
-        <p>Created By: ${created_user_name}</p>
-        <p>Status: ${ticket_status}</p>
-        <p>Remark: ${remarks}</p>
-        <p>Assigned Name: ${assigned_name}</p>
-        <p>Created On: ${created_at}</p>
-        <p>Thank you for reaching out to us.</p>
-          <p>We appreciate your patience and will resolve your query promptly.</p>
+        <h2 style="text-transform: capitalize;">Dear ${user_name},</h2>
+        <p>We are pleased to inform you that your support ticket has been successfully resolved and marked as <strong>Closed</strong>.</p>
+        
+        <p>Closed At: ${closed_at}</p>
+          <p>If you are satisfied with the resolution, no further action is required.</p>
+          <p>Thank you for choosing Tecstaq Support.</p>
           <p>Best regards,</p>
           <p><strong>Tecstaq Support</strong></p>
           <a href="support@dani.com">support@dani.com</a>
@@ -770,8 +728,8 @@ for (let i = 0; i < userResult.length; i++) {
         // Prepare the email message options.
         const mailOptions = {
             from: "support@tecstaq.com", // Sender address from environment variables.
-            to: [created_email_id, email_id, technician_email_id], // Recipient's name and email address."sushantsjamdade@gmail.com",
-            // bcc: ["sushantsjamdade@gmail.com"],
+            to: [email_id], // Recipient's name and email address."sushantsjamdade@gmail.com",
+            bcc: ["usha.yadav@tecstaq.com"],
             subject: `Ticket ${ticket_no} Update Successfully`,
             html: message,
         };
@@ -788,12 +746,14 @@ for (let i = 0; i < userResult.length; i++) {
         message: "Ticket created successfully, but failed to send email.",
         });
     }
-    }
-        return res.status(200).json({
-            status: 200,
-            message: "Ticket updated successfully.",
-        });
+    
+        // return res.status(200).json({
+        //     status: 200,
+        //     message: "Ticket updated successfully.",
+        // });
     } catch (error) {
+        console.log(error);
+        
         return error500(error, res);
     } finally {
         if (connection) connection.release()
