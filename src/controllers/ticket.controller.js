@@ -320,7 +320,7 @@ const createTicket = async (req, res)=>{
     const ticket_status = req.body.ticket_status ? req.body.ticket_status.trim() : null;
     const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
     const ticket_conversation_id = req.body.ticket_conversation_id ? req.body.ticket_conversation_id : null;
-    const base64PDF = req.body.file_path ? req.body.file_path.trim() :null;
+    const base64PDF = req.body.base64PDF ? req.body.base64PDF.trim() :null;
     const assigned_to = req.body.assigned_to ? req.body.assigned_to : null;
     const remarks = req.body.remarks ? req.body.remarks.trim() : null;
     const old_status = req.body.old_status ? req.body.old_status : null;
@@ -608,7 +608,7 @@ const updateTicket = async (req, res) => {
     const ticket_status = req.body.ticket_status ? req.body.ticket_status.trim() : '';
     // const closed_at = req.body.closed_at ? req.body.closed_at.trim(): null;
     const ticket_conversation_id = req.body.ticket_conversation_id ? req.body.ticket_conversation_id : null;
-    const base64PDF = req.body.file_path ? req.body.file_path.trim() : null;
+    const base64PDF = req.body.base64PDF ? req.body.base64PDF.trim() : null;
     const assigned_to = req.body.assigned_to ? req.body.assigned_to : '';
         // const remark = req.body.remark ? req.body.remark.trim() :'';
     const assigned_at = req.body.assigned_at ? req.body.assigned_at : null;
