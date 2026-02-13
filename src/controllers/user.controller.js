@@ -1325,7 +1325,7 @@ const getUserDownload = async (req, res) => {
 
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
-            getUserQuery += ` AND (LOWER(name) LIKE '%${lowercaseKey}%')`;
+                getUserQuery += ` AND (LOWER(u.user_name) LIKE '%${lowercaseKey}%' || LOWER(r.role_name) LIKE '%${lowercaseKey}%')`;
         }
 
         if (role_id) {

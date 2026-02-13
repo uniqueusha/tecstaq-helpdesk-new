@@ -850,8 +850,8 @@ const getAllTickets = async (req, res) => {
                 getTicketsQuery += ` AND status = 0`;
                 countQuery += ` AND status = 0`;
             } else {
-                getTicketsQuery += ` AND (LOWER(u1.user_name) LIKE '%${lowercaseKey}%' OR LOWER(t.subject) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%' OR LOWER(c.customer_name) LIKE '%${lowercaseKey}%')`;
-                countQuery += ` AND (LOWER(u1.user_name) LIKE '%${lowercaseKey}%' OR LOWER(t.subject) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%' OR LOWER(c.customer_name) LIKE '%${lowercaseKey}%')`;
+                getTicketsQuery += ` AND (LOWER(u2.user_name) LIKE '%${lowercaseKey}%' OR LOWER(c.company_name) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%' OR LOWER(c.customer_name) LIKE '%${lowercaseKey}%')`;
+                countQuery += ` AND (LOWER(u2.user_name) LIKE '%${lowercaseKey}%' OR LOWER(c.company_name) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%' OR LOWER(c.customer_name) LIKE '%${lowercaseKey}%')`;
             }
         }
 
@@ -1410,7 +1410,7 @@ const getTicketDownload = async (req, res) => {
         WHERE 1 `;
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
-            getTicketQuery += ` AND (LOWER(u1.user_name) LIKE '%${lowercaseKey}%' OR LOWER(t.subject) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%' OR LOWER(c.customer_name) LIKE '%${lowercaseKey}%')`;
+            getTicketQuery += ` AND (LOWER(u2.user_name) LIKE '%${lowercaseKey}%' OR LOWER(c.company_name) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%' OR LOWER(c.customer_name) LIKE '%${lowercaseKey}%')`;
         }
 
         if (fromDate && toDate) {
@@ -1644,8 +1644,8 @@ const getAllTicketReports = async (req, res) => {
                 getTicketsQuery += ` AND status = 0`;
                 countQuery += ` AND status = 0`;
             } else {
-                getTicketsQuery += ` AND (LOWER(u1.user_name) LIKE '%${lowercaseKey}%' OR LOWER(t.subject) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%' OR LOWER(c.customer_name) LIKE '%${lowercaseKey}%')`;
-                countQuery += ` AND (LOWER(u1.user_name) LIKE '%${lowercaseKey}%' OR LOWER(t.subject) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%' OR LOWER(c.customer_name) LIKE '%${lowercaseKey}%')`;
+                getTicketsQuery += ` AND (LOWER(u2.user_name) LIKE '%${lowercaseKey}%' OR LOWER(c.company_name) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%' OR LOWER(c.customer_name) LIKE '%${lowercaseKey}%')`;
+                countQuery += ` AND (LOWER(u2.user_name) LIKE '%${lowercaseKey}%' OR LOWER(c.company_name) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%' OR LOWER(c.customer_name) LIKE '%${lowercaseKey}%')`;
             }
         }
 
@@ -1811,7 +1811,7 @@ const getTicketReportsDownload = async (req, res) => {
         WHERE 1 `;
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
-            getTicketReportsQuery += ` AND (LOWER(u1.user_name) LIKE '%${lowercaseKey}%' OR LOWER(t.subject) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%')`;
+            getTicketReportsQuery += ` AND (LOWER(u2.user_name) LIKE '%${lowercaseKey}%' OR LOWER(c.company_name) LIKE '%${lowercaseKey}%' OR LOWER(t.ticket_no) LIKE '%${lowercaseKey}%' OR LOWER(tc.name) LIKE '%${lowercaseKey}%' OR LOWER(u.user_name) LIKE '%${lowercaseKey}%' OR LOWER(d.department_name) LIKE '%${lowercaseKey}%')`;
         }
 
         if (fromDate && toDate) {
