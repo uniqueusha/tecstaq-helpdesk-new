@@ -382,32 +382,44 @@ const createTicket = async (req, res)=>{
         const ticket_id = insertTicketResult[0].insertId
         
         if (base64PDF) {
-        const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
-        const pdfBuffer = Buffer.from(cleanedBase64, "base64");
+    const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
+    const pdfBuffer = Buffer.from(cleanedBase64, "base64");
 
-        const fileType = await import('file-type');
-        const fileTypeResult = await fileType.fileTypeFromBuffer(pdfBuffer);
-
-        const allowedMimeTypes = [
-          'application/pdf',
-          'image/jpg',
-          'image/png'
-        ];
-
-        // if (pdfBuffer.length > 10 * 1024 * 1024) {
-        //   await connection.query("ROLLBACK");
-        //   return error422("File size must be under 10MB", res);
-        // }
-
-        const fileName = `ticket_${ticket_id}_${Date.now()}.${fileTypeResult.ext}`;
-        const filePath = path.join(__dirname, "..", "..", "uploads", fileName);
-
-        fs.writeFileSync(filePath, pdfBuffer);
-
-        const dbFilePath = `uploads/${fileName}`;
-        const insertTicketAttachmentQuery = "INSERT INTO ticket_attachments (ticket_id, ticket_conversation_id, file_path, uploaded_by)VALUES(?, ?, ?, ?)";
-        const insertTicketAttachmentResult = await connection.query(insertTicketAttachmentQuery,[ticket_id, ticket_conversation_id, dbFilePath, user_id]);
+    // ?? 5 MB FILE SIZE LIMIT
+    if (pdfBuffer.length > 5 * 1024 * 1024) {
+        return error422("File size must be under 5 MB", res);
     }
+
+    // ?? DETECT FILE TYPE
+    const fileTypeResult = await FileType.fromBuffer(pdfBuffer);
+
+    if (!fileTypeResult) {
+        return error422("Invalid or corrupted file", res);
+    }
+
+    const allowedMimeTypes = [
+        "application/pdf",
+        "image/jpeg",
+        "image/png"
+    ];
+
+    if (!allowedMimeTypes.includes(fileTypeResult.mime)) {
+        return error422("Only PDF, JPG, PNG files are allowed", res);
+    }
+
+    const fileName = `ticket_${ticket_id}_${Date.now()}.${fileTypeResult.ext}`;
+    const filePath = path.join(__dirname, "..", "..", "uploads", fileName);
+
+    fs.writeFileSync(filePath, pdfBuffer);
+
+    await connection.query(
+        `INSERT INTO ticket_attachments 
+        (ticket_id, ticket_conversation_id, file_path, uploaded_by)
+        VALUES (?, ?, ?, ?)`,
+        [ticket_id, ticket_conversation_id, `uploads/${fileName}`, user_id]
+    );
+}
+
 
         const insertTicketAssignedQuery = "INSERT INTO ticket_assignments (ticket_id, assigned_to, assigned_by, remarks)VALUES(?, ?, ?, ?)";
         const insertTicketAssignedResult = await connection.query(insertTicketAssignedQuery,[ticket_id, assigned_to, user_id,  remarks]);
@@ -432,10 +444,8 @@ const createTicket = async (req, res)=>{
             const technician_email_id = userResult[i].email_id;
             if (technician_email_id) {
              technicianEmails.push(technician_email_id);
-            }  
-             
+            }    
         }
-        console.log("All technician emails:", technicianEmails);
 
         const userDataQuery = `SELECT user_name, email_id FROM users WHERE user_id = ?`;
         const [userDataResult] = await connection.query(userDataQuery,[user_id]);
@@ -648,25 +658,43 @@ const updateTicket = async (req, res) => {
         await connection.query(updateQuery, [  ticket_category_id, priority_id, department_id, subject,  description, ticket_status, ticket_status, ticketId]);
  
         if (base64PDF) {
-        const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
-        const pdfBuffer = Buffer.from(cleanedBase64, "base64");
+    const cleanedBase64 = base64PDF.replace(/^data:.*;base64,/, "");
+    const pdfBuffer = Buffer.from(cleanedBase64, "base64");
 
-        const uploadsDir = path.join(__dirname, "..", "..", "uploads");
-        if (!fs.existsSync(uploadsDir)) {
-          fs.mkdirSync(uploadsDir, { recursive: true });
-        }
-
-        const fileName = `ticket_${ticketId}_${Date.now()}.pdf`;
-        const filePath = path.join(uploadsDir, fileName);
-
-        fs.writeFileSync(filePath, pdfBuffer);
-
-        const dbFilePath = `uploads/${fileName}`;
-        // const updateTicketAttachmentQuery = "UPDATE ticket_attachments SET ticket_id = ?, ticket_conversation_id = ?, file_path = ?  WHERE ticket_id = ?";
-        // const updateTicketAttachmentResult = await connection.query(updateTicketAttachmentQuery,[ticketId, ticket_conversation_id, dbFilePath,  ticketId]);
-        const insertTicketAttachmentQuery = "INSERT INTO ticket_attachments (ticket_id, ticket_conversation_id, file_path, uploaded_by)VALUES(?, ?, ?, ?)";
-        const insertTicketAttachmentResult = await connection.query(insertTicketAttachmentQuery,[ticketId, ticket_conversation_id, dbFilePath, user_id]);
+    // ?? 5 MB FILE SIZE LIMIT
+    if (pdfBuffer.length > 5 * 1024 * 1024) {
+        return error422("File size must be under 5 MB", res);
     }
+
+    // ?? DETECT FILE TYPE
+    const fileTypeResult = await FileType.fromBuffer(pdfBuffer);
+
+    if (!fileTypeResult) {
+        return error422("Invalid or corrupted file", res);
+    }
+
+    const allowedMimeTypes = [
+        "application/pdf",
+        "image/jpeg",
+        "image/png"
+    ];
+
+    if (!allowedMimeTypes.includes(fileTypeResult.mime)) {
+        return error422("Only PDF, JPG, PNG files are allowed", res);
+    }
+
+    const fileName = `ticket_${ticketId}_${Date.now()}.${fileTypeResult.ext}`;
+    const filePath = path.join(__dirname, "..", "..", "uploads", fileName);
+
+    fs.writeFileSync(filePath, pdfBuffer);
+
+    await connection.query(
+        `INSERT INTO ticket_attachments 
+        (ticket_id, ticket_conversation_id, file_path, uploaded_by)
+        VALUES (?, ?, ?, ?)`,
+        [ticketId, ticket_conversation_id, `uploads/${fileName}`, user_id]
+    );
+}
         const updateTicketAssignedQuery = "UPDATE ticket_assignments SET ticket_id = ?, assigned_to = ?, assigned_at = ?, remarks = ? WHERE ticket_id = ?";
         const updateTicketAssignedResult = await connection.query(updateTicketAssignedQuery,[ticketId, assigned_to, assigned_at, remarks, ticketId]);
 
@@ -718,7 +746,7 @@ const updateTicket = async (req, res) => {
         <p>We are pleased to inform you that your support ticket has been successfully resolved and marked as <strong>Closed</strong>.</p>
         
         <p>Closed At: ${closed_at}</p>
-          <p>If you are satisfied with the resolution, no further action is required.</p>
+          <p>If you are satisfied with the solution, no further action is required.</p>
           <p>Thank you for choosing Tecstaq Support.</p>
           <p>Best regards,</p>
           <p><strong>Tecstaq Support</strong></p>
@@ -735,9 +763,109 @@ const updateTicket = async (req, res) => {
             subject: `Ticket ${ticket_no} Update Successfully`,
             html: message,
         };
-        
         try {
         await transporter.sendMail(mailOptions);
+        return res.status(200).json({
+        status: 200,
+        message: `Ticket Update successfully.`,
+        });
+    } catch (emailError) {
+        return res.status(200).json({
+        status: 200,
+        message: "Ticket created successfully, but failed to send email.",
+        });
+    }
+}
+        if (ticket_status === "Re-assign") {
+        // send email technician
+        const userQuery = `SELECT u.user_name, u.email_id FROM users u
+        LEFT JOIN customer_agents ca ON ca.user_id = u.user_id
+        WHERE u.role_id = 2 AND u.status = 1 AND ca.customer_id = ${customer_id}`;
+        const [userResult] = await connection.query(userQuery);
+ 
+        let technicianEmails = [];
+        for (let i = 0; i < userResult.length; i++) {
+            const technician_email_id = userResult[i].email_id;
+            if (technician_email_id) {
+             technicianEmails.push(technician_email_id);
+            }    
+        }
+
+        const userDataQuery = `SELECT user_name, email_id FROM users WHERE user_id = ?`;
+        const [userDataResult] = await connection.query(userDataQuery,[user_id]);
+        
+        const createdAtQuery = `SELECT created_at FROM tickets WHERE user_id = ?`;
+        const [createdAtResult] = await connection.query(createdAtQuery,[user_id]);
+        
+        const userAssignedDataQuery = `SELECT user_name, email_id FROM users WHERE user_id = ?`;
+        const [userAssignedDataResult] = await connection.query(userAssignedDataQuery,[assigned_to]);
+        
+        const categoryDataQuery = `SELECT name FROM ticket_categories WHERE ticket_category_id = ?`;
+        const [categoryDataResult] = await connection.query(categoryDataQuery,[ticket_category_id]);
+
+        const priorityDataQuery = `SELECT name FROM priorities WHERE priority_id = ?`;
+        const [priorityDataResult] = await connection.query(priorityDataQuery,[priority_id]);
+
+        const customerQuery = `SELECT email_id, company_name FROM customers WHERE customer_id = ?`;
+        const [customerResult] = await connection.query(customerQuery,[customer_id]);
+
+        const created_user_name = userDataResult[0].user_name;
+        const created_email_id = userDataResult[0].email_id;
+        const category_name = categoryDataResult[0].name;
+        const priority_name = priorityDataResult[0].name;
+        const assigned_user_name = userAssignedDataResult.user_name || null;
+        const created_at = createdAtResult[0].created_at.toISOString().split('T')[0];
+        const customer_email_id = customerResult[0].email_id;
+        const company_name = customerResult[0].company_name;
+        
+         const technicianMessage  = `
+        <!DOCTYPE html>
+        <html lang="en">
+        <head>
+          <meta charset="UTF-8">
+          <title>Welcome to test</title>
+          <style>
+              div{
+              font-family: Arial, sans-serif; 
+               margin: 0px;
+                padding: 0px;
+                color:black;
+              }
+          </style>
+        </head>
+        <body>
+        <div>
+        <h2 style="text-transform: capitalize;">Dear Team,</h2>
+        </p>Here are the details of your ticket:</p>
+        <p>Ticket No: ${ticket_no}</p>
+        <p>Company Name : ${company_name}</p>
+        <p>Subject: ${subject}</P>
+        <p>Category: ${category_name}</p>
+        <p>Priority: ${priority_name}</p>
+        <p>Description: ${description}</p>
+        <p>Created By: ${created_user_name}</p>
+        <p>Status: Open</p>
+        <p>Created On: ${created_at}</p>
+        
+          <p>Best regards,</p>
+          <p><strong>Tecstaq Support</strong></p>
+          <a href="support@dani.com">support@dani.com</a>
+        </div>
+        </body>
+        </html>`;
+        // Prepare the email message options.
+        const technicianMailOptions  = {
+            from: "support@tecstaq.com", // Sender address from environment variables.
+            to: technicianEmails,
+            // to: [created_email_id, email_id, customer_email_id].filter(Boolean), 
+            // cc : technicianEmails,
+            bcc: ["usha.yadav@tecstaq.com"],
+            subject: `Ticket ${ticket_no} Created Successfully`,
+            html: technicianMessage,
+        };
+
+        try {
+        await transporter.sendMail(technicianMailOptions);
         return res.status(200).json({
         status: 200,
         message: `Ticket Update successfully.`,
