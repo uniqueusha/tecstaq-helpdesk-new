@@ -685,9 +685,10 @@ const updateTicket = async (req, res) => {
         // Commit the transaction
         await connection.commit();
         
-        const createdAtQuery = `SELECT closed_at, ticket_status, customer_id, customer_user_id FROM tickets WHERE ticket_id = ? `;
+        const createdAtQuery = `SELECT closed_at, ticket_no, ticket_status, customer_id, customer_user_id FROM tickets WHERE ticket_id = ? `;
         const [createdAtResult] = await connection.query(createdAtQuery,[ticketId]);
         const customer_user_id = createdAtResult[0].customer_user_id;
+        const ticket_no = createdAtResult[0].ticket_no;
          
         if (ticket_status === "Closed") {
         const createAtQuery = `SELECT email_id, user_name FROM users WHERE user_id = ? `;
@@ -725,7 +726,7 @@ const updateTicket = async (req, res) => {
         </div>
         </body>
         </html>`;
-
+        
         // Prepare the email message options.
         const mailOptions = {
             from: "support@tecstaq.com", // Sender address from environment variables.
@@ -734,7 +735,7 @@ const updateTicket = async (req, res) => {
             subject: `Ticket ${ticket_no} Update Successfully`,
             html: message,
         };
-    
+        
         try {
         await transporter.sendMail(mailOptions);
         return res.status(200).json({
@@ -747,11 +748,11 @@ const updateTicket = async (req, res) => {
         message: "Ticket created successfully, but failed to send email.",
         });
     }
-}
-        // return res.status(200).json({
-        //     status: 200,
-        //     message: "Ticket updated successfully.",
-        // });
+        }
+        return res.status(200).json({
+            status: 200,
+            message: "Ticket updated successfully.",
+        });
     } catch (error) {
         console.log(error);
         
