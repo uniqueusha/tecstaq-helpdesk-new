@@ -546,7 +546,7 @@ const createTicket = async (req, res)=>{
           <p>We appreciate your patience and will resolve your query promptly.</p>
           <p>Best regards,</p>
           <p><strong>Tecstaq Support</strong></p>
-          <a href="support@tecstaq.com">support@tecstaq.com</a>
+          <a href="https://support.tecstaq.com/">support@tecstaq.com</a>
         </div>
         </body>
         </html>`;
