@@ -1445,7 +1445,7 @@ const getTicketDownload = async (req, res) => {
             getTicketQuery += ` AND t.customer_id = ${customer_id} `;
         }
         getTicketQuery += " GROUP BY t.ticket_id";
-        getTicketQuery += " ORDER BY tc.cts DESC";
+        getTicketQuery += " ORDER BY t.created_at DESC";
 
         let result = await connection.query(getTicketQuery);
         let ticket = result[0];
