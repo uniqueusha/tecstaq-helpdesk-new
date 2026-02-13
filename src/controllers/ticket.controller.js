@@ -685,8 +685,11 @@ const updateTicket = async (req, res) => {
         // Commit the transaction
         await connection.commit();
 
-        const userQuery = `SELECT user_name, email_id FROM users WHERE role_id = 2 AND status = 1 AND  customer_id = ?`;
+        // const userQuery = `SELECT user_name, email_id FROM users WHERE role_id = 2 AND status = 1 AND  customer_id = ?`;
+        // const [userResult] = await connection.query(userQuery);
+        const userQuery = `SELECT user_name, email_id FROM users WHERE role_id = 2 AND status = 1`;
         const [userResult] = await connection.query(userQuery);
+
 
 for (let i = 0; i < userResult.length; i++) {
             const element = userResult[i];
