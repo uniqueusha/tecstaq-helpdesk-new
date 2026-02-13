@@ -1325,21 +1325,17 @@ const getUserDownload = async (req, res) => {
 
         if (key) {
             const lowercaseKey = key.toLowerCase().trim();
-                getUserQuery += ` AND (LOWER(u.user_name) LIKE '%${lowercaseKey}%' || LOWER(r.role_name) LIKE '%${lowercaseKey}%')`;
         }
 
         if (role_id) {
             getUserQuery += ` AND u.role_id = ${role_id} `;
-            countQuery += ` AND u.role_id = ${role_id}  `;
         }
         if (customer_id) {
             getUserQuery += ` AND s.customer_id = ${customer_id} `;
-            countQuery += ` AND s.customer_id = ${customer_id}  `;
         }
 
         if (user_id) {
             getUserQuery += ` AND s.customer_user_id = ${user_id} `;
-            countQuery += ` AND s.customer_user_id = ${user_id}  `;
         }
         getUserQuery += " ORDER BY u.created_at DESC";
 
@@ -1389,6 +1385,8 @@ const getUserDownload = async (req, res) => {
 
         await connection.commit();
     } catch (error) {
+        console.log(error);
+        
         return error500(error, res);
     } finally {
         if (connection) connection.release();
