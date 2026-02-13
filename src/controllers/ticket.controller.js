@@ -689,6 +689,7 @@ const updateTicket = async (req, res) => {
         const [createdAtResult] = await connection.query(createdAtQuery,[ticketId]);
         const customer_user_id = createdAtResult[0].customer_user_id;
          
+        if (ticket_status === "Closed") {
         const createAtQuery = `SELECT email_id, user_name FROM users WHERE user_id = ? `;
         const [createAtResult] = await connection.query(createAtQuery,[customer_user_id]);
         const email_id = createAtResult[0].email_id;
@@ -746,7 +747,7 @@ const updateTicket = async (req, res) => {
         message: "Ticket created successfully, but failed to send email.",
         });
     }
-    
+}
         // return res.status(200).json({
         //     status: 200,
         //     message: "Ticket updated successfully.",
