@@ -895,7 +895,7 @@ const updateTicket = async (req, res) => {
 
 //all tickets list
 const getAllTickets = async (req, res) => {
-    const { page, perPage, key, user_id, department_id, ticket_category_id, assigned_to, fromDate, toDate, ticket_status, priority_id, customer_id } = req.query;
+    const { page, perPage, key, technician_id, user_id, department_id, ticket_category_id, assigned_to, fromDate, toDate, ticket_status, priority_id, customer_id } = req.query;
 
     // attempt to obtain a database connection
     let connection = await getConnection();
@@ -975,9 +975,15 @@ const getAllTickets = async (req, res) => {
         //     countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign'`;
         // }
         if (user_id) {
-            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR (t.user_id = ${user_id} AND t.customer_user_id = ${user_id}) OR ts.changed_by = ${user_id} OR t.ticket_status = 'Re-assign' )`;
-            countQuery += ` AND ((ta.assigned_to IS NULL  AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR (t.user_id = ${user_id} AND t.customer_user_id = ${user_id}) OR ts.changed_by = ${user_id} OR t.ticket_status = 'Re-assign')`;
+            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} OR ts.changed_by = ${user_id}  )`;
+            countQuery += ` AND ((ta.assigned_to IS NULL  AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} OR ts.changed_by = ${user_id} )`;
         }
+
+        if (technician_id) {
+            getTicketsQuery += ` AND (ta.assigned_to IS NULL AND ca.user_id = ${technician_id})`;
+            countQuery += ` AND (ta.assigned_to IS NULL  AND ca.user_id = ${technician_id})`;
+        }
+
 
         if (assigned_to) {
             getTicketsQuery += ` AND ta.assigned_to = ${assigned_to}`;
