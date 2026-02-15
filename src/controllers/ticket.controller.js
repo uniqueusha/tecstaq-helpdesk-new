@@ -974,17 +974,28 @@ const getAllTickets = async (req, res) => {
         //     getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign' `;
         //     countQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id}) OR t.ticket_status = 'Re-assign'`;
         // }
+        // if (user_id) {
+        //     getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} OR ts.changed_by = ${user_id}  )`;
+        //     countQuery += ` AND ((ta.assigned_to IS NULL  AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} OR ts.changed_by = ${user_id} )`;
+        // }
         if (user_id) {
-            getTicketsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} OR ts.changed_by = ${user_id}  )`;
-            countQuery += ` AND ((ta.assigned_to IS NULL  AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} OR ts.changed_by = ${user_id} )`;
+    getTicketsQuery += ` AND ( ta.assigned_to = ${user_id} 
+        OR (
+            (ta.assigned_to IS NULL OR ta.assigned_to = 0) 
+            AND ca.user_id = ${user_id}
+        )
+        OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id}
+    )`;
+    
+    countQuery += ` AND ( ta.assigned_to = ${user_id} 
+        OR (
+            (ta.assigned_to IS NULL OR ta.assigned_to = 0) 
+            AND ca.user_id = ${user_id}
+        )
+        OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id}
+    )`;
+
         }
-
-        if (technician_id) {
-            getTicketsQuery += ` AND (ta.assigned_to IS NULL AND ca.user_id = ${technician_id})`;
-            countQuery += ` AND (ta.assigned_to IS NULL  AND ca.user_id = ${technician_id})`;
-        }
-
-
         if (assigned_to) {
             getTicketsQuery += ` AND ta.assigned_to = ${assigned_to}`;
             countQuery += ` AND ta.assigned_to = ${assigned_to}`;
