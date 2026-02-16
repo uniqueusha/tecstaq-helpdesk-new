@@ -144,34 +144,54 @@ const createUser = async (req, res) => {
         await connection.beginTransaction();
 
         const checkUserQuery = "SELECT * FROM users WHERE LOWER(TRIM(email_id)) = ? AND status = 1";
-        const [checkUserResult] = await pool.query(checkUserQuery, [email_id.toLowerCase()]);
+        const [checkUserResult] = await connection.query(checkUserQuery, [email_id.toLowerCase()]);
         let user_id = null;
         let isNewUser = false;
         //insert into user
-        if (checkUserResult.length === 0) {
-        const insertUserQuery = `INSERT INTO users (user_name, email_id, phone_number, role_id, department_id ) VALUES (?, ?, ?, ?, ?)`;
-        const insertUserValues = [ user_name, email_id, phone_number, role_id, department_id ];
-        const insertuserResult = await connection.query(insertUserQuery, insertUserValues);
-        user_id = insertuserResult[0].insertId;
-        isNewUser = true;
+    //     if (checkUserResult.length === 0) {
+    //     const insertUserQuery = `INSERT INTO users (user_name, email_id, phone_number, role_id, department_id ) VALUES (?, ?, ?, ?, ?)`;
+    //     const insertUserValues = [ user_name, email_id, phone_number, role_id, department_id ];
+    //     const insertuserResult = await connection.query(insertUserQuery, insertUserValues);
+    //     user_id = insertuserResult[0].insertId;
+    //     isNewUser = true;
 
         
-        // let length = 8,
-        // charset ="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
-        // password = "";
-        // for (let i = 0, n = charset.length; i < length; ++i) {
-        //     password += charset.charAt(Math.floor(Math.random() * n));
-        // }
-        const hash = await bcrypt.hash(password, 10); // Hash the password using bcrypt
+    //     // let length = 8,
+    //     // charset ="abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789",
+    //     // password = "";
+    //     // for (let i = 0, n = charset.length; i < length; ++i) {
+    //     //     password += charset.charAt(Math.floor(Math.random() * n));
+    //     // }
+    //     const hash = await bcrypt.hash(password, 10); // Hash the password using bcrypt
 
-        //insert into Untitled
-        const insertUntitledQuery = "INSERT INTO untitled (user_id, extenstions) VALUES (?,?)";
-        const insertUntitledValues = [user_id, hash];
-        const untitledResult = await connection.query(insertUntitledQuery, insertUntitledValues)
-        } else {
-      // ================= USER EXISTS =================
-        user_id = checkUserResult[0].user_id;
-    }
+    //     //insert into Untitled
+    //     const insertUntitledQuery = "INSERT INTO untitled (user_id, extenstions) VALUES (?,?)";
+    //     const insertUntitledValues = [user_id, hash];
+    //     const untitledResult = await connection.query(insertUntitledQuery, insertUntitledValues)
+    //     } else {
+    //   // ================= USER EXISTS =================
+    //     user_id = checkUserResult[0].user_id;
+    // }let user_id;
+
+if (checkUserResult.length > 0) {
+    user_id = checkUserResult[0].user_id;
+} else {
+    const insertUserQuery = `
+        INSERT INTO users (user_name, email_id, phone_number, role_id, department_id)
+        VALUES (?, ?, ?, ?, ?)
+    `;
+    const [insertResult] = await connection.query(insertUserQuery, [
+        user_name, email_id, phone_number, role_id, department_id
+    ]);
+    user_id = insertResult.insertId;
+
+    const hash = await bcrypt.hash(password, 10);
+    await connection.query(
+        "INSERT INTO untitled (user_id, extenstions) VALUES (?, ?)",
+        [user_id, hash]
+    );
+}
+
 
 
         if(role_id == 3 && department_id == 0){
@@ -325,6 +345,8 @@ const createUser = async (req, res) => {
       });
     }
     } catch (error) {
+        console.log(error);
+        
         await connection.rollback();
         return error500(error, res);
     } finally {

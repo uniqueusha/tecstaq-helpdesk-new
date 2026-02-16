@@ -3,7 +3,7 @@ const fs = require('fs');
 const path = require('path');
 const nodemailer = require("nodemailer");
 const xlsx = require("xlsx");
-//const FileType = require("file-type");
+// const FileType = require("file-type");
 
 
 const transporter = nodemailer.createTransport({
