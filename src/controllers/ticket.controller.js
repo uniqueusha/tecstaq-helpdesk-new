@@ -1537,8 +1537,18 @@ const getTicketDownload = async (req, res) => {
             getTicketQuery += ` AND DATE(t.created_at) BETWEEN '${fromDate}' AND '${toDate}'`;
         }
 
+        // if (user_id) {
+        //     getTicketQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign')`;
+        // }
         if (user_id) {
-            getTicketQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign')`;
+    getTicketQuery += ` AND ( ta.assigned_to = ${user_id} 
+        OR (
+            (ta.assigned_to IS NULL OR ta.assigned_to = 0) 
+            AND ca.user_id = ${user_id}
+        )
+        OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id}
+    )`;
+    
         }
 
         if (assigned_to) {
@@ -1779,21 +1789,39 @@ const getAllTicketReports = async (req, res) => {
             countQuery += ` AND (t.customer_id = ${customer_id} OR s.customer_id = ${customer_id}) `;
         }
 
+        // if (user_id) {
+        //     getTicketsQuery += ` AND (
+        //     (ta.assigned_to IS NULL AND ca.user_id = ${user_id}) 
+        //     OR ta.assigned_to = ${user_id} 
+        //     OR t.user_id = ${user_id} 
+        //     OR ts.changed_by = ${user_id}
+        //     OR t.customer_user_id = ${user_id} 
+        //     OR t.ticket_status = 'Re-assign') `;
+        //     countQuery += ` AND (
+        //     (ta.assigned_to IS NULL AND ca.user_id = ${user_id}) 
+        //     OR ta.assigned_to = ${user_id} 
+        //     OR t.user_id = ${user_id} 
+        //     OR ts.changed_by = ${user_id} 
+        //     OR t.customer_user_id = ${user_id} 
+        //     OR t.ticket_status = 'Re-assign' )`;
+        // }
+
         if (user_id) {
-            getTicketsQuery += ` AND (
-            (ta.assigned_to IS NULL AND ca.user_id = ${user_id}) 
-            OR ta.assigned_to = ${user_id} 
-            OR t.user_id = ${user_id} 
-            OR ts.changed_by = ${user_id}
-            OR t.customer_user_id = ${user_id} 
-            OR t.ticket_status = 'Re-assign') `;
-            countQuery += ` AND (
-            (ta.assigned_to IS NULL AND ca.user_id = ${user_id}) 
-            OR ta.assigned_to = ${user_id} 
-            OR t.user_id = ${user_id} 
-            OR ts.changed_by = ${user_id} 
-            OR t.customer_user_id = ${user_id} 
-            OR t.ticket_status = 'Re-assign' )`;
+    getTicketsQuery += ` AND ( ta.assigned_to = ${user_id} 
+        OR (
+            (ta.assigned_to IS NULL OR ta.assigned_to = 0) 
+            AND ca.user_id = ${user_id}
+        )
+        OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id}
+    )`;
+    
+    countQuery += ` AND ( ta.assigned_to = ${user_id} 
+        OR (
+            (ta.assigned_to IS NULL OR ta.assigned_to = 0) 
+            AND ca.user_id = ${user_id}
+        )
+        OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id}
+    )`;
         }
 
         //  if (user_id) {
@@ -1938,8 +1966,19 @@ const getTicketReportsDownload = async (req, res) => {
             getTicketReportsQuery += ` AND DATE(t.created_at) BETWEEN '${fromDate}' AND '${toDate}'`;
         }
 
+        // if (user_id) {
+        //     getTicketReportsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR ts.changed_by = ${user_id} OR t.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign' )`;
+        // }
+
         if (user_id) {
-            getTicketReportsQuery += ` AND ((ta.assigned_to IS NULL AND ca.user_id = ${user_id}) OR ta.assigned_to = ${user_id} OR t.user_id = ${user_id} OR ts.changed_by = ${user_id} OR t.customer_user_id = ${user_id} OR t.ticket_status = 'Re-assign' )`;
+    getTicketsQuery += ` AND ( ta.assigned_to = ${user_id} 
+        OR (
+            (ta.assigned_to IS NULL OR ta.assigned_to = 0) 
+            AND ca.user_id = ${user_id}
+        )
+        OR t.user_id = ${user_id} OR t.customer_user_id = ${user_id}
+    )`;
+    
         }
 
         if (assigned_to) {
