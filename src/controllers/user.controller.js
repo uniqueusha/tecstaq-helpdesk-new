@@ -248,42 +248,7 @@ if (checkUserResult.length > 0) {
                 const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
             }
         }
-    } else if (checkUserResult.length > 0) {
-        const insertCustomerQuery = `INSERT INTO customers (customer_name, company_name, email_id, address, phone_number, domain, isSite, user_id) VALUES (?, ?, ?, ?, ?, ?, ?, ?)`;
-            const insertCustomerValues = [ user_name, company_name, email_id, address, phone_number, domain, isSite, userId ];
-            const insertCustomerResult = await connection.query(insertCustomerQuery, insertCustomerValues);
-            const customerid = insertCustomerResult[0].insertId;
-
-        let serviceArray = serviceData
-        for (let i = 0; i < serviceArray.length; i++) {
-            const elements = serviceArray[i];
-            const service_id = elements.service_id ? elements.service_id : null;
-            
-            // Check if service_id exists
-            const serviceIdQuery = "SELECT * FROM services WHERE service_id = ? ";
-            const serviceIdResult = await connection.query(serviceIdQuery, [service_id]);
-            if (serviceIdResult[0].length == 0) {
-                return error422("Service Not Found.", res);
-            }
-
-            let insertServiceQuery = 'INSERT INTO customer_service (customer_id, service_id) VALUES (?, ?)';
-            let insertServiceValues = [ customerid, service_id ];
-            let insertServiceResult = await connection.query(insertServiceQuery, insertServiceValues);
-        } 
-        
-        if (customerRole.role_name === 'Customer') {
-        let customerAgentArray = customerAgent;
-            for (let i = 0; i < customerAgentArray.length; i++) {
-                const elements = customerAgentArray[i];
-                const department_id = elements.department_id ? elements.department_id : "";
-                const userId = elements.user_id ? elements.user_id: "";
-          
-                const insertAgentQuery = `INSERT INTO customer_agents (customer_id, department_id, user_id) VALUES (?, ?, ?)`;
-                const insertAgentValues = [ customerid, department_id, userId,];
-                const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
-            }
-        }
-    }
+    } 
 
         //commit the transation
         await connection.commit();
