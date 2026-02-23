@@ -642,6 +642,110 @@ const updateUser = async (req, res) => {
     }
 }
 
+const updateCustomer = async (req, res) => {
+    const customerId = parseInt(req.params.id);
+    const user_name = req.body.user_name ? req.body.user_name.trim() : "";
+    const email_id = req.body.email_id ? req.body.email_id.trim() : "";
+    const phone_number = req.body.phone_number ? req.body.phone_number : null;
+    const role_id = req.body.role_id ? req.body.role_id : 0;
+    const department_id = req.body.department_id ? req.body.department_id : 0;
+    const company_name = req.body.company_name ? req.body.company_name.trim() : "";
+    const address = req.body.address ? req.body.address.trim() : "";
+    const domain = req.body.domain ? req.body.domain.trim() : "";
+    const service_id = req.body.service_id ? req.body.service_id : [];
+    const isSite = req.body.isSite ? req.body.isSite : '';
+    const serviceData = req.body.serviceData ? req.body.serviceData : [];
+    const customerAgent = req.body.customerAgent ? req.body.customerAgent :[];
+    userId = req.companyData.user_id;
+
+    if (!user_name) {
+        return error422("User name is required.", res);
+    } else if (!email_id) {
+        return error422("Email id is required.", res);
+    } else if (!phone_number) {
+        return error422("Phone number is required.", res);
+    }
+
+    // attempt to obtain a database connection
+    let connection = await getConnection();
+
+    try {
+
+        //start a transaction
+        await connection.beginTransaction();
+
+        // Check if customer exists
+        const customerQuery = "SELECT * FROM customers WHERE customer_id  = ?";
+        const customerResult = await connection.query(customerQuery, [customerId]);
+        if (customerResult[0].length === 0) {
+            return error422("Customer Not Found.", res);
+        }
+
+        // Update the customer record with new data
+        const updateQuery = `
+            UPDATE customers
+            SET user_name = ?, company_name =?, email_id = ?, address, phone_number = ?, domain = ?, isSite = ?
+            WHERE customer_id = ?
+        `;
+
+        await connection.query(updateQuery, [ user_name, company_name, email_id, address, phone_number, domain, isSite, customerId]);
+
+        //role-customer
+        // const selectCustomerRoleQuery = `SELECT * FROM roles WHERE role_id = ?`
+        // const selectResult = await connection.query(selectCustomerRoleQuery,[role_id]);
+        // const customerRole = selectResult[0][0];
+        let serviceArray = serviceData
+        for (let i = 0; i < serviceArray.length; i++) {
+            const elements = serviceArray[i];
+            const service_id = elements.service_id ? elements.service_id : null;
+            
+            // Check if service_id exists
+            const serviceIdQuery = "SELECT * FROM services WHERE service_id = ? ";
+            const serviceIdResult = await connection.query(serviceIdQuery, [service_id]);
+            if (serviceIdResult[0].length == 0) {
+                return error422("Service Not Found.", res);
+            }
+
+            let insertServiceQuery = 'INSERT INTO customer_service (customer_id, service_id) VALUES (?, ?)';
+            let insertServiceValues = [ customerId, service_id ];
+            let insertServiceResult = await connection.query(insertServiceQuery, insertServiceValues);
+        } 
+        
+        
+        let customerAgentArray = customerAgent;
+        for (let i = 0; i < customerAgentArray.length; i++) {
+            const elements = customerAgentArray[i];
+            const technician_Id = elements.user_id ? elements.user_id : '';
+          
+             // Check if Technician exists
+              const technicianQuery = "SELECT user_id, role_id FROM users WHERE role_id = 2 AND user_id = ?";
+              const technicianResult = await connection.query(technicianQuery,[technician_Id]);
+              if (technicianResult[0].length == 0) {
+                return error422("Technician Not Found.", res);
+              }
+
+            const selectCustomerRoleQuery = `SELECT * FROM customers WHERE user_id = ?`
+            const [selectResult] = await connection.query(selectCustomerRoleQuery,[userId]);
+            const customer_id = selectResult[0].customer_id;
+
+            const insertAgentQuery = `INSERT INTO customer_agents (customer_id, department_id, user_id, customer_user_id) VALUES (?, ?, ?, ?)`;
+                const insertAgentValues = [ customer_id, department_id, userId , userId];
+                const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
+        }
+    
+        // Commit the transaction
+        await connection.commit();
+        return res.status(200).json({
+            status: 200,
+            message: "User updated successfully.",
+        });
+    } catch (error) {
+        return error500(error, res);
+    } finally {
+        if (connection) connection.release()
+    }
+}
+
 //status change of user...
 const onStatusChange = async (req, res) => {
     const userId = parseInt(req.params.id);
@@ -1866,7 +1970,6 @@ const getCustomer = async (req, res) => {
         LEFT JOIN users u ON u.user_id = c.user_id
         LEFT JOIN roles r ON r.role_id = u.role_id
         LEFT JOIN departments d ON d.department_id = u.department_id
-
         WHERE 1 AND c.customer_id = ? `;
         const customerResult = await connection.query(customerQuery, [customerId]);
         if (customerResult[0].length == 0) {
@@ -2269,6 +2372,7 @@ module.exports = {
   getTechnicianWma,
   getUser,
   updateUser,
+  updateCustomer,
   onStatusChange,
   onChangePassword,
   sendOtp,

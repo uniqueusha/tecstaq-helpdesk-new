@@ -63,6 +63,8 @@ router.get('/customer/:id', checkAuth, accessHandle([1,5]),userController.getCus
 router.put('/change-password',userController.onChangePassword);
 //update user
 router.put('/:id', checkAuth, accessHandle([1,5]),userController.updateUser);
+//update customer
+router.put('/customer/:id', checkAuth, accessHandle([1,5]),userController.updateCustomer);
 //status change
 router.patch('/:id', checkAuth, accessHandle([1,5]),userController.onStatusChange);
 //status change customer
