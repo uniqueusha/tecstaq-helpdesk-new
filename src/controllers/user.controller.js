@@ -684,7 +684,7 @@ const updateCustomer = async (req, res) => {
         // Update the customer record with new data
         const updateQuery = `
             UPDATE customers
-            SET user_name = ?, company_name =?, email_id = ?, address, phone_number = ?, domain = ?, isSite = ?
+            SET user_name = ?, company_name =?, email_id = ?, address = ?, phone_number = ?, domain = ?, isSite = ?
             WHERE customer_id = ?
         `;
 
