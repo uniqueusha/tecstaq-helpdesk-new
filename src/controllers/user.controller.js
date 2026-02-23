@@ -720,6 +720,7 @@ const updateCustomer = async (req, res) => {
         for (let i = 0; i < customerAgentArray.length; i++) {
             const elements = customerAgentArray[i];
             const technician_Id = elements.user_id ? elements.user_id : '';
+            const department_id = elements.department_id ? elements.department_id : ''
           
              // Check if Technician exists
               const technicianQuery = "SELECT user_id, role_id FROM users WHERE role_id = 2 AND user_id = ?";
