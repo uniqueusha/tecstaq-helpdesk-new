@@ -209,7 +209,7 @@ const createTicketold = async (req, res)=>{
             }  
              
         }
-        console.log("All technician emails:", technicianEmails);
+        
 
         const userDataQuery = `SELECT user_name, email_id FROM users WHERE user_id = ?`;
         const [userDataResult] = await connection.query(userDataQuery,[user_id]);
@@ -885,7 +885,6 @@ const updateTicket = async (req, res) => {
             message: "Ticket updated successfully.",
         });
     } catch (error) {
-        console.log(error);
         
         return error500(error, res);
     } finally {
@@ -1039,7 +1038,7 @@ const getAllTickets = async (req, res) => {
 
         const result = await connection.query(getTicketsQuery);
         const tickets = result[0];
-        console.log(getTicketsQuery);
+        
         
         // Commit the transaction
         await connection.commit();

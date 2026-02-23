@@ -192,8 +192,6 @@ if (checkUserResult.length > 0) {
     );
 }
 
-
-
         if(role_id == 3 && department_id == 0){
         // Check if user exists
         const userQuery = "SELECT * FROM customers WHERE customer_id  = ?";
@@ -216,9 +214,7 @@ if (checkUserResult.length > 0) {
             const insertCustomerResult = await connection.query(insertCustomerQuery, insertCustomerValues);
             const customerid = insertCustomerResult[0].insertId;
             const customer_user_id = user_id;
-            console.log(customer_user_id);
             
-
         let serviceArray = serviceData
         for (let i = 0; i < serviceArray.length; i++) {
             const elements = serviceArray[i];
@@ -310,8 +306,6 @@ if (checkUserResult.length > 0) {
       });
     }
     } catch (error) {
-        console.log(error);
-        
         await connection.rollback();
         return error500(error, res);
     } finally {
@@ -608,23 +602,30 @@ const updateUser = async (req, res) => {
         `;
 
         await connection.query(updateQuery, [ user_name, email_id, phone_number, role_id, department_id, userId]);
-
-        if (role_id == 3) {
+        //role-customer
+        const selectCustomerRoleQuery = `SELECT * FROM roles WHERE role_id = ?`
+        const selectResult = await connection.query(selectCustomerRoleQuery,[role_id]);
+        const customerRole = selectResult[0][0];
+        if (customerRole.role_name === 'Customer') {
         let customerAgentArray = customerAgent;
         for (let i = 0; i < customerAgentArray.length; i++) {
             const elements = customerAgentArray[i];
-            const Technician_id = elements.user_id ? elements.user_id : '';
+            const technician_Id = elements.user_id ? elements.user_id : '';
           
              // Check if Technician exists
-              const technicianQuery = "SELECT user_id FROM users WHERE role_id = 2 AND user_id = ?";
-              const technicianResult = await connection.query(technicianQuery,[Technician_id]);
+              const technicianQuery = "SELECT user_id, role_id FROM users WHERE role_id = 2 AND user_id = ?";
+              const technicianResult = await connection.query(technicianQuery,[technician_Id]);
               if (technicianResult[0].length == 0) {
                 return error422("Technician Not Found.", res);
               }
 
-            const insertAgentQuery = `INSERT INTO customer_agents (customer_id, user_id ) VALUES (?, ?)`;
-            const insertAgentValues = [ user_id, Technician_id ];
-            const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
+            const selectCustomerRoleQuery = `SELECT * FROM customers WHERE user_id = ?`
+            const [selectResult] = await connection.query(selectCustomerRoleQuery,[userId]);
+            const customer_id = selectResult[0].customer_id;
+
+            const insertAgentQuery = `INSERT INTO customer_agents (customer_id, department_id, user_id, customer_user_id) VALUES (?, ?, ?, ?)`;
+                const insertAgentValues = [ customer_id, department_id, userId , userId];
+                const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
         }
     }
         // Commit the transaction
@@ -1374,8 +1375,6 @@ const getUserDownload = async (req, res) => {
 
         await connection.commit();
     } catch (error) {
-        console.log(error);
-        
         return error500(error, res);
     } finally {
         if (connection) connection.release();
