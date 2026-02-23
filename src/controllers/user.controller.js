@@ -657,7 +657,7 @@ const updateCustomer = async (req, res) => {
     const isSite = req.body.isSite ? req.body.isSite : '';
     const serviceData = req.body.serviceData ? req.body.serviceData : [];
     const customerAgent = req.body.customerAgent ? req.body.customerAgent :[];
-    userId = req.companyData.user_id;
+    // const userId = req.companyData.user_id;
 
     if (!user_name) {
         return error422("User name is required.", res);
@@ -679,7 +679,7 @@ const updateCustomer = async (req, res) => {
         const customerQuery = "SELECT * FROM customers WHERE customer_id  = ?";
         const [customerResult] = await connection.query(customerQuery, [customerId]);
         const customer_user_id = customerResult[0].user_id;
-        console.log(customer_user_id);
+
         
         if (customerResult[0].length === 0) {
             return error422("Customer Not Found.", res);
@@ -721,6 +721,7 @@ const updateCustomer = async (req, res) => {
             const elements = customerAgentArray[i];
             const technician_Id = elements.user_id ? elements.user_id : '';
             const department_id = elements.department_id ? elements.department_id : ''
+            const agents_id = elements.agents_id ? elements.agents_id :''
           
              // Check if Technician exists
               const technicianQuery = "SELECT user_id, role_id FROM users WHERE role_id = 2 AND user_id = ?";
@@ -729,11 +730,12 @@ const updateCustomer = async (req, res) => {
                 return error422("Technician Not Found.", res);
               }
 
-           
-
+            if (!agents_id){
             const insertAgentQuery = `INSERT INTO customer_agents (customer_id, department_id, user_id, customer_user_id) VALUES (?, ?, ?, ?)`;
-                const insertAgentValues = [ customerId, department_id, technician_Id , customer_user_id];
-                const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
+            const insertAgentValues = [ customerId, department_id, technician_Id , customer_user_id];
+            const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
+            }
+            
         }
     
         // Commit the transaction
