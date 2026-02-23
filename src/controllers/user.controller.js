@@ -636,6 +636,7 @@ const updateUser = async (req, res) => {
             message: "User updated successfully.",
         });
     } catch (error) {
+         await connection.rollback();
         return error500(error, res);
     } finally {
         if (connection) connection.release()
@@ -676,7 +677,10 @@ const updateCustomer = async (req, res) => {
 
         // Check if customer exists
         const customerQuery = "SELECT * FROM customers WHERE customer_id  = ?";
-        const customerResult = await connection.query(customerQuery, [customerId]);
+        const [customerResult] = await connection.query(customerQuery, [customerId]);
+        const customer_user_id = customerResult[0].user_id;
+        console.log(customer_user_id);
+        
         if (customerResult[0].length === 0) {
             return error422("Customer Not Found.", res);
         }
@@ -684,7 +688,7 @@ const updateCustomer = async (req, res) => {
         // Update the customer record with new data
         const updateQuery = `
             UPDATE customers
-            SET user_name = ?, company_name =?, email_id = ?, address = ?, phone_number = ?, domain = ?, isSite = ?
+            SET customer_name = ?, company_name =?, email_id = ?, address = ?, phone_number = ?, domain = ?, isSite = ?
             WHERE customer_id = ?
         `;
 
@@ -724,12 +728,10 @@ const updateCustomer = async (req, res) => {
                 return error422("Technician Not Found.", res);
               }
 
-            const selectCustomerRoleQuery = `SELECT * FROM customers WHERE user_id = ?`
-            const [selectResult] = await connection.query(selectCustomerRoleQuery,[userId]);
-            const customer_id = selectResult[0].customer_id;
+           
 
             const insertAgentQuery = `INSERT INTO customer_agents (customer_id, department_id, user_id, customer_user_id) VALUES (?, ?, ?, ?)`;
-                const insertAgentValues = [ customer_id, department_id, userId , userId];
+                const insertAgentValues = [ customerId, department_id, technician_Id , customer_user_id];
                 const insertAgentResult = await connection.query(insertAgentQuery, insertAgentValues);
         }
     
@@ -737,9 +739,10 @@ const updateCustomer = async (req, res) => {
         await connection.commit();
         return res.status(200).json({
             status: 200,
-            message: "User updated successfully.",
+            message: "Customer updated successfully.",
         });
     } catch (error) {
+         await connection.rollback();
         return error500(error, res);
     } finally {
         if (connection) connection.release()
