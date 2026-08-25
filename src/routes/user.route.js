@@ -4,7 +4,10 @@ const router = express.Router();
 const checkAuth = require('../middleware/check.auth')
 const accessHandle = require('../middleware/access-handle.auth');
 const rateLimit = require("express-rate-limit");
-
+router.post('/gemini-chat', userController.geminiChat);
+router.get('/gemini-chat/:id',userController.getAiSupportByCategoryId);
+//all list
+router.get('/gemini-chat',userController.getAiSupportList);
 // const loginRateLimiter = rateLimit({
 //   windowMs: 5 * 60 * 1000,       // 5 minutes
 //   max: 3,    
@@ -75,6 +78,7 @@ router.post('/verify-otp',userController.verifyOtp);
 router.post('/check-emailid',userController.checkEmailId);
 router.post('/forgot-Password',userController.forgotPassword);
 router.post('/send-otp-if-email-not-exists',userController.sendOtpIfEmailIdNotExists);
+
 
 //delete Technician
 router.delete('/:id',checkAuth, accessHandle([1,5]),userController.deleteTechnician);

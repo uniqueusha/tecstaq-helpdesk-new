@@ -7,6 +7,7 @@ const fs = require("fs");
 const path = require('path');
 const { exec } = require("child_process");
 const Importer  = require('mysql-import');
+const { log } = require("console");
 require("dotenv").config();
 
 const transporter = nodemailer.createTransport({
@@ -2369,6 +2370,424 @@ const getLog = async (req, res) => {
         if (connection) connection.release()
     }
 }
+// const geminiChat = async (req, res) => {
+//     let connection;
+
+//     try {
+//         connection = await getConnection();
+
+//         const { message } = req.body;
+
+//         if (!message?.trim()) {
+//             return res.status(400).json({
+//                 status: 400,
+//                 success: false,
+//                 message: "Message is required"
+//             });
+//         }
+
+//         const models = [
+//             "gemini-flash-latest",
+//             "gemini-2.5-flash",
+//             "gemini-2.0-flash"
+//         ];
+
+//         let aiResponse = null;
+//         let lastError = null;
+
+//         for (const model of models) {
+
+//             try {
+
+//                 console.log(`Trying Model: ${model}`);
+
+//                 const response = await fetch(
+//                     `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+//                     {
+//                         method: "POST",
+//                         headers: {
+//                             "Content-Type": "application/json",
+//                             "X-goog-api-key": process.env.GEMINI_API_KEY
+//                         },
+//                         body: JSON.stringify({
+//                             contents: [
+//                                 {
+//                                     parts: [
+//                                         {
+//                                             text: message
+//                                         }
+//                                     ]
+//                                 }
+//                             ]
+//                         })
+//                     }
+//                 );
+
+//                 const data = await response.json();
+
+//                 console.log(`${model} =>`, JSON.stringify(data));
+
+//                 if (
+//                     response.ok &&
+//                     data?.candidates?.[0]?.content?.parts?.[0]?.text
+//                 ) {
+//                     aiResponse =
+//                         data.candidates[0].content.parts[0].text;
+
+//                     break;
+//                 }
+
+//                 lastError = data;
+
+//             } catch (err) {
+
+//                 lastError = err;
+//             }
+//         }
+
+//         if (!aiResponse) {
+//             return res.status(200).json({
+//                 status: 200,
+//                 success: false,
+//                 message: "All Gemini models unavailable",
+//                 error: lastError
+//             });
+//         }
+
+//         return res.status(200).json({
+//             status: 200,
+//             success: true,
+//             data: aiResponse
+//         });
+
+//     } catch (error) {
+
+//         console.error(error);
+
+//         return res.status(500).json({
+//             status: 500,
+//             success: false,
+//             message: error.message
+//         });
+
+//     } finally {
+
+//         if (connection) {
+//             connection.release();
+//         }
+//     }
+// };
+const geminiChat = async (req, res) => {
+    let connection;
+
+    try {
+        connection = await getConnection();
+
+        const {
+            issue,
+            ticket_category_id,
+            user_id
+        } = req.body;
+
+        if (!issue?.trim()) {
+            return res.status(400).json({
+                status: 400,
+                success: false,
+                issue: "Message is required"
+            });
+        }
+
+        const models = [
+            "gemini-flash-latest",
+            "gemini-2.5-flash",
+            "gemini-2.0-flash"
+        ];
+
+        let aiResponse = null;
+        let lastError = null;
+
+        for (const model of models) {
+
+            try {
+
+                console.log(`Trying Model: ${model}`);
+
+                const response = await fetch(
+                    `https://generativelanguage.googleapis.com/v1beta/models/${model}:generateContent`,
+                    {
+                        method: "POST",
+                        headers: {
+                            "Content-Type": "application/json",
+                            "X-goog-api-key": process.env.GEMINI_API_KEY
+                        },
+                        body: JSON.stringify({
+                            contents: [
+                                {
+                                    parts: [
+                                        {
+                                            text: issue
+                                        }
+                                    ]
+                                }
+                            ]
+                        })
+                    }
+                );
+
+                const data = await response.json();
+
+                // console.log(`${model} =>`, JSON.stringify(data));
+
+                if (
+                    response.ok &&
+                    data?.candidates?.[0]?.content?.parts?.[0]?.text
+                ) {
+                    aiResponse =
+                        data.candidates[0].content.parts[0].text;
+
+                    break;
+                }
+
+                lastError = data;
+
+            } catch (err) {
+
+                lastError = err;
+            }
+        }
+
+        if (!aiResponse) {
+            return res.status(200).json({
+                status: 200,
+                success: false,
+                message: "All Gemini models unavailable",
+                error: lastError
+            });
+        }
+
+        // Insert Chat History
+        const insertQuery = `
+            INSERT INTO ai_support
+            (
+                ticket_category_id,
+                user_id,
+                issue_text,
+                ai_response
+            )
+            VALUES (?, ?, ?, ?)
+        `;
+
+        const [insertResult] = await connection.query(
+            insertQuery,
+            [
+                ticket_category_id || null,
+                user_id || null,
+                issue,
+                aiResponse
+            ]
+        );
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            ai_id: insertResult.insertId,
+            data: aiResponse
+        });
+
+    } catch (error) {
+
+        console.error(error);
+
+        return res.status(500).json({
+            status: 500,
+            success: false,
+            message: error.message
+        });
+
+    } finally {
+
+        if (connection) {
+            connection.release();
+        }
+    }
+};
+const getAiSupportByCategoryId = async (req, res) => {
+
+    let connection;
+
+    try {
+
+        connection = await getConnection();
+
+        const { id } = req.params;
+
+        if (!id) {
+            return res.status(400).json({
+                status: 400,
+                message: "ticket_category_id is required"
+            });
+        }
+
+        const query = `
+            SELECT
+                ai.ai_id,
+                ai.ticket_category_id,
+                ai.user_id,
+                ai.issue_text,
+                ai.ai_response,
+                ai.created_at,
+                tc.name AS category_name,
+                tc.description AS category_description
+            FROM ai_support ai
+            LEFT JOIN ticket_categories tc
+                ON tc.ticket_category_id = ai.ticket_category_id
+            WHERE ai.ticket_category_id = ?
+            ORDER BY ai.created_at DESC
+        `;
+
+        const [rows] = await connection.query(query, [id]);
+
+        return res.status(200).json({
+            status: 200,
+            success: true,
+            message: "AI Support data retrieved successfully",
+            count: rows.length,
+            data: rows
+        });
+
+    } catch (error) {
+
+        console.log(error);
+
+        return res.status(500).json({
+            status: 500,
+            success: false,
+            message: error.message
+        });
+
+    } finally {
+
+        if (connection) {
+            connection.release();
+        }
+    }
+};
+const getAiSupportList = async (req, res) => {
+
+    const {
+        page,
+        perPage,
+        key,
+        ticket_category_id
+    } = req.query;
+
+    let connection = await getConnection();
+
+    try {
+
+        let aiSupportQuery = `
+            SELECT
+                ai.ai_id,
+                ai.ticket_category_id,
+                ai.user_id,
+                ai.issue_text,
+                ai.ai_response,
+                ai.created_at,
+                tc.name AS category_name,
+                tc.description AS category_description
+            FROM ai_support ai
+            LEFT JOIN ticket_categories tc
+                ON tc.ticket_category_id = ai.ticket_category_id
+            WHERE 1
+        `;
+
+        let countQuery = `
+            SELECT COUNT(*) AS total
+            FROM ai_support ai
+            LEFT JOIN ticket_categories tc
+                ON tc.ticket_category_id = ai.ticket_category_id
+            WHERE 1
+        `;
+
+        // Search by Issue Text
+        if (key) {
+            const searchKey = key.toLowerCase().trim();
+
+            aiSupportQuery += `
+                AND LOWER(ai.issue_text) LIKE '%${searchKey}%'
+            `;
+
+            countQuery += `
+                AND LOWER(ai.issue_text) LIKE '%${searchKey}%'
+            `;
+        }
+
+        // Filter by Category
+        if (ticket_category_id) {
+
+            aiSupportQuery += `
+                AND ai.ticket_category_id = ${ticket_category_id}
+            `;
+
+            countQuery += `
+                AND ai.ticket_category_id = ${ticket_category_id}
+            `;
+        }
+
+        aiSupportQuery += ` ORDER BY ai.created_at DESC`;
+
+        let total = 0;
+
+        if (page && perPage) {
+
+            const totalResult = await connection.query(countQuery);
+
+            total = parseInt(totalResult[0][0].total);
+
+            const start = (page - 1) * perPage;
+
+            aiSupportQuery += ` LIMIT ${perPage} OFFSET ${start}`;
+        }
+
+        const [rows] = await connection.query(aiSupportQuery);
+
+        const response = {
+            status: 200,
+            success: true,
+            message: "AI Support list retrieved successfully",
+            data: rows
+        };
+
+        if (page && perPage) {
+            response.pagination = {
+                per_page: Number(perPage),
+                total,
+                current_page: Number(page),
+                last_page: Math.ceil(total / perPage)
+            };
+        }
+
+        return res.status(200).json(response);
+
+    } catch (error) {
+
+        console.log(error);
+
+        return res.status(500).json({
+            status: 500,
+            success: false,
+            message: error.message
+        });
+
+    } finally {
+
+        if (connection) {
+            connection.release();
+        }
+
+    }
+
+};
 module.exports = {
   createUser,
   login,
@@ -2400,5 +2819,8 @@ module.exports = {
   getSignupWma,
   getCustomerDownload,
   logout,
-  getLog
+  getLog,
+  geminiChat,
+  getAiSupportByCategoryId,
+  getAiSupportList
 };

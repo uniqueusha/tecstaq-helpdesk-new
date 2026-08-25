@@ -22,7 +22,7 @@ router.get('/today-open-ticket', checkAuth, accessHandle([1,2,3,5]),ticketContro
 //doc download
 router.get('/doc-download', checkAuth, accessHandle([1,2,3,5]),ticketController.getDocumentDownload);
 //download
-router.get('/download', checkAuth, accessHandle([1,2,3,5]),ticketController.getTicketDownload);
+router.get('/download',ticketController.getTicketDownload);
 //status list
 router.get('/status-list', checkAuth, accessHandle([1,2,3,5]),ticketController.getStatusList);
 //by id
