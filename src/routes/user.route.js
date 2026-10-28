@@ -47,7 +47,7 @@ router.get('/download', checkAuth, accessHandle([1,5]),userController.getUserDow
 router.get('/customer-download', checkAuth, accessHandle([1,5]),userController.getCustomerDownload);
 // router.get('/test-mail', userController.testMail);
 //active customer agent
-router.get('/customer-wma', checkAuth, accessHandle([1,2,3,5]),userController.getCustomersWma);
+router.get('/customer-wma', checkAuth, userController.getCustomersWma);
 //active technician
 router.get('/technician-wma', checkAuth, accessHandle([1,2,3,5]),userController.getTechnicianWma);
 //Signup active

@@ -420,24 +420,23 @@ const createTicket = async (req, res)=>{
         [ticket_id, ticket_conversation_id, `uploads/${fileName}`, user_id]
     );
 }  
-        if (assigned_to) {
+       
         const insertTicketAssignedQuery = "INSERT INTO ticket_assignments (ticket_id, assigned_to, assigned_by, remarks)VALUES(?, ?, ?, ?)";
         const insertTicketAssignedResult = await connection.query(insertTicketAssignedQuery,[ticket_id, assigned_to, user_id,  remarks]);
-
+ if (assigned_to) {
         const technicianQuery = `SELECT * FROM customer_agents WHERE user_id = ? AND customer_id = ?`;
         const technicianResult = await connection.query(technicianQuery, [assigned_to, customer_id ]);
 
-        const assignedQuery = `SELECT * FROM users WHERE user_id = ? `;
-        const [assignedResult] = await connection.query(assignedQuery, [assigned_to]);
-        let departmentId = assignedResult[0].department_id;
+        //const assignedQuery = `SELECT * FROM users WHERE user_id = ? `;
+        //const [assignedResult] = await connection.query(assignedQuery, [assigned_to]);
+        //let departmentId = assignedResult[0].department_id;
 
         if (technicianResult[0].length == 0) {
             const insertCustomerAgentsQuery = ` INSERT INTO customer_agents (customer_id, user_id, department_id, customer_user_id  ) VALUES (?, ?, ?, ?)`;
-            const insertCustomerAgentsvalue = await connection.query(insertCustomerAgentsQuery, [customer_id, assigned_to, departmentId, customer_user_id]);
+            const insertCustomerAgentsvalue = await connection.query(insertCustomerAgentsQuery, [customer_id, assigned_to, customer_id, customer_user_id]);
         }
-    }
 
-        
+         }
         let insertTicketStatusHistoryQuery = 'INSERT INTO ticket_conversations(ticket_id, sender_id, message) VALUES (?, ?, ?)';
         let insertTicketStatusHistoryValues = [ ticket_id, user_id, description ];
         let insertTicketStatusHistoryResult = await connection.query(insertTicketStatusHistoryQuery, insertTicketStatusHistoryValues);
@@ -603,6 +602,7 @@ const createTicket = async (req, res)=>{
     }
     
     } catch (error) {
+    console.log(error);
         await connection.rollback();
         return error500(error, res);
     } finally{
@@ -708,23 +708,24 @@ const updateTicket = async (req, res) => {
         [ticketId, ticket_conversation_id, `uploads/${fileName}`, user_id]
     );
 }
+        
+        let insertTicketStatusHistoryQuery = 'INSERT INTO ticket_conversations(ticket_id, sender_id, message) VALUES (?, ?, ?)';
+        let insertTicketStatusHistoryValues = [ ticketId, user_id, message ];
+        let insertTicketStatusHistoryResult = await connection.query(insertTicketStatusHistoryQuery, insertTicketStatusHistoryValues);
 
-let insertTicketStatusHistoryQuery = 'INSERT INTO ticket_conversations(ticket_id, sender_id, message) VALUES (?, ?, ?)';
-let insertTicketStatusHistoryValues = [ ticketId, user_id, message ];
-let insertTicketStatusHistoryResult = await connection.query(insertTicketStatusHistoryQuery, insertTicketStatusHistoryValues);
+        const selectTicketStatusHistoryQuery = "SELECT *  FROM ticket_status_history WHERE ticket_id = ? ORDER BY cts DESC";
+        const [selectTicketStatusHistoryResult] = await connection.query(selectTicketStatusHistoryQuery, [ticketId]);
+        const old_status = selectTicketStatusHistoryResult[0].new_status;
+        
+        let insertTicketConversationQuery = 'INSERT INTO ticket_status_history (ticket_id, old_status, new_status, changed_by, remarks) VALUES (?, ?, ?, ?, ?)';
+        let insertTicketConversationValues = [ ticketId, old_status, ticket_status, user_id, remarks];
+        let insertTicketConversationResult = await connection.query(insertTicketConversationQuery, insertTicketConversationValues);
+        
+        
+        const updateTicketAssignedQuery = "UPDATE ticket_assignments SET ticket_id = ?, assigned_to = ?, assigned_at = ?, remarks = ? WHERE ticket_id = ?";
+        const updateTicketAssignedResult = await connection.query(updateTicketAssignedQuery,[ticketId, assigned_to, assigned_at, remarks, ticketId]);
 
-const selectTicketStatusHistoryQuery = "SELECT *  FROM ticket_status_history WHERE ticket_id = ? ORDER BY cts DESC";
-const [selectTicketStatusHistoryResult] = await connection.query(selectTicketStatusHistoryQuery, [ticketId]);
-const old_status = selectTicketStatusHistoryResult[0].new_status;
-
-let insertTicketConversationQuery = 'INSERT INTO ticket_status_history (ticket_id, old_status, new_status, changed_by, remarks) VALUES (?, ?, ?, ?, ?)';
-let insertTicketConversationValues = [ ticketId, old_status, ticket_status, user_id, remarks];
-let insertTicketConversationResult = await connection.query(insertTicketConversationQuery, insertTicketConversationValues);
-
-if (assigned_to) {
-const updateTicketAssignedQuery = "UPDATE ticket_assignments SET ticket_id = ?, assigned_to = ?, assigned_at = ?, remarks = ? WHERE ticket_id = ?";
-const updateTicketAssignedResult = await connection.query(updateTicketAssignedQuery,[ticketId, assigned_to, assigned_at, remarks, ticketId]);
-
+ if (assigned_to) {
         const technicianQuery = `SELECT * FROM customer_agents WHERE user_id = ? AND customer_id = ?`;
         const technicianResult = await connection.query(technicianQuery, [assigned_to, customer_id ]);
 
@@ -739,8 +740,8 @@ const updateTicketAssignedResult = await connection.query(updateTicketAssignedQu
             const insertCustomerAgentsQuery = ` INSERT INTO customer_agents (customer_id, user_id, department_id, customer_user_id  ) VALUES (?, ?, ?, ?)`;
             const insertCustomerAgentsvalue = await connection.query(insertCustomerAgentsQuery, [customer_id, assigned_to, departmentId, customerUserId]);
         }
-    }
-        
+
+        }
         // Commit the transaction
         await connection.commit();
         
